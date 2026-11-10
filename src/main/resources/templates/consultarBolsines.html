@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<!--
+  Patrones de GUI aplicados:
+  - Encabezado: nombre del sistema, CM del usuario y Cerrar sesión.
+  - Master-detail: mapa grande a la izquierda y lista de bolsines a la derecha.
+  - Selección sincronizada: marcador y item de la lista se resaltan juntos.
+  - Filtro siempre visible: precinto + CM destino, en vivo, con "Mostrando X de Y".
+  - Modal de confirmación con el resumen del bolsín.
+  - Feedback: éxito, aviso sin ubicación (A3), estado vacío (A1) y "Consultando GPS…".
+  - Diseño responsive: en pantallas chicas la lista va debajo del mapa.
+-->
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Consultar seguimiento de bolsines</title>
+    <th:block th:if="${#strings.isEmpty(claveGoogleMaps)}">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+              integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+                integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    </th:block>
+    <link rel="stylesheet" th:href="@{/css/estilos.css}">
+</head>
+<body class="pagina-consulta">
+<header class="encabezado">
+    <strong class="encabezado-sistema">Sistema de Bolsines</strong>
+    <span id="lblCMUsuario" th:text="${lblCMUsuario}"></span>
+    <form th:action="@{/logout}" method="post"><button type="submit" class="boton-encabezado">Cerrar sesión</button></form>
+</header>
+
+<main class="consulta">
+    <section class="consulta-mapa" aria-label="Mapa de ubicaciones de bolsines">
+        <div id="mapaUbicaciones"></div>
+    </section>
+
+    <section class="consulta-panel" aria-label="Bolsines enviados">
+        <!-- A1: no hay bolsines enviados desde la CM del usuario -->
+        <div class="estado-vacio" th:unless="${seleccionHabilitada}">
+            <p th:text="'No hay bolsines enviados desde ' + ${lblCMUsuario}"></p>
+            <a class="boton boton-primario" th:href="@{/inicio}">Volver</a>
+        </div>
+
+        <th:block th:if="${seleccionHabilitada}">
+            <div class="filtro">
+                <label>Precinto
+                    <input id="txtFiltroPrecinto" type="search" placeholder="Ej.: PR-1001" autocomplete="off">
+                </label>
+                <label>CM destino
+                    <select id="cmbFiltroCMDestino"><option value="">Todas</option></select>
+                </label>
+                <p id="lblCantidadBolsines" class="filtro-cantidad" role="status"></p>
+            </div>
+
+            <ul id="listaBolsines" class="lista-bolsines">
+                <li th:each="u : ${ubicaciones}"
+                    th:data-nro="${u['nroBolsin']}"
+                    th:data-precinto="${u['numeroPrecinto']}"
+                    th:data-cm-destino="${u['cmDestino']}">
+                    <button type="button" class="tarjeta-bolsin" th:disabled="${!u['disponible']}">
+                        <span class="tarjeta-titulo" th:text="'Bolsín ' + ${u['nroBolsin']}"></span>
+                        <span th:text="'Precinto ' + ${u['numeroPrecinto']}"></span>
+                        <span th:text="'Destino: ' + ${u['cmDestino']}"></span>
+                        <span th:text="'GPS: ' + ${u['modeloGPS']}"></span>
+                        <span class="tarjeta-tiempo" th:if="${u['disponible']}" th:data-fecha-hora="${u['fechaHora']}"></span>
+                        <!-- A3: el GPS Tracker no informó la ubicación de este bolsín -->
+                        <span class="aviso-sin-ubicacion" th:unless="${u['disponible']}">⚠ Ubicación no disponible</span>
+                    </button>
+                </li>
+            </ul>
+
+            <form class="panel-acciones" th:action="@{/consultar-bolsines/cancelar}" method="post">
+                <button type="submit" id="btnCancelar" class="boton boton-secundario">Cancelar</button>
+            </form>
+        </th:block>
+    </section>
+</main>
+
+<dialog id="modalConfirmacionCorreo" class="modal">
+    <h2>¿Enviar correo al GCM de la CM destino?</h2>
+    <dl class="modal-resumen">
+        <dt>Bolsín</dt><dd id="resumenBolsin"></dd>
+        <dt>CM destino</dt><dd id="resumenCMDestino"></dd>
+        <dt>Coordenadas</dt><dd id="resumenCoordenadas"></dd>
+        <dt>Hora</dt><dd id="resumenHora"></dd>
+    </dl>
+    <form class="modal-acciones" th:action="@{/consultar-bolsines/confirmacion}" method="post">
+        <button type="button" id="btnNoEnviar" class="boton boton-secundario">No enviar</button>
+        <button type="submit" class="boton boton-primario">Enviar correo</button>
+    </form>
+</dialog>
+
+<script th:inline="javascript">
+    const ubicaciones = /*[[${ubicaciones}]]*/ [];
+    const claveGoogleMaps = /*[[${claveGoogleMaps}]]*/ "";
+    const urlSeleccion = /*[[@{/consultar-bolsines/seleccion}]]*/ "";
+</script>
+<script th:src="@{/js/interfazGoogleMaps.js}"></script>
+<script th:src="@{/js/pantallaConsultarBolsines.js}"></script>
+</body>
+</html>

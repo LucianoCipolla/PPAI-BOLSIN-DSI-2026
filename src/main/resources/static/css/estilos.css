@@ -1,0 +1,395 @@
+/* Estilo sobrio e institucional: azul del Correo, fondo claro, contraste AA. */
+:root {
+    --azul: #0b3d91;
+    --azul-oscuro: #082c69;
+    --azul-claro: #e8eef9;
+    --naranja: #c2410c;
+    --fondo: #f4f6f9;
+    --superficie: #ffffff;
+    --borde: #cbd3df;
+    --texto: #1c2733;
+    --texto-secundario: #4a5868;
+    --exito-fondo: #e6f4ea;
+    --exito-texto: #1a5c2e;
+    --error-fondo: #fdecea;
+    --error-texto: #8c1d18;
+    --aviso-fondo: #fff4e0;
+    --aviso-texto: #7a4a00;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+}
+
+h1, h2 {
+    margin: 0 0 16px;
+    line-height: 1.25;
+}
+
+h1 {
+    font-size: 1.5rem;
+}
+
+h2 {
+    font-size: 1.2rem;
+}
+
+:focus-visible {
+    outline: 3px solid var(--naranja);
+    outline-offset: 2px;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+/* Encabezado */
+.encabezado {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 24px;
+    background: var(--azul);
+    color: #ffffff;
+}
+
+.encabezado-sistema {
+    font-size: 1.1rem;
+    margin-right: auto;
+}
+
+.encabezado form {
+    margin: 0;
+}
+
+.boton-encabezado {
+    padding: 6px 12px;
+    border: 1px solid #ffffff;
+    border-radius: 6px;
+    background: transparent;
+    color: #ffffff;
+    font: inherit;
+    cursor: pointer;
+}
+
+.boton-encabezado:hover {
+    background: var(--azul-oscuro);
+}
+
+/* Botones */
+.boton {
+    display: inline-block;
+    padding: 10px 16px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font: inherit;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.boton-primario {
+    background: var(--azul);
+    color: #ffffff;
+}
+
+.boton-primario:hover {
+    background: var(--azul-oscuro);
+}
+
+.boton-secundario {
+    background: var(--superficie);
+    border-color: var(--azul);
+    color: var(--azul);
+}
+
+.boton-secundario:hover {
+    background: var(--azul-claro);
+}
+
+/* Inicio */
+.contenedor-angosto {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px 16px;
+}
+
+.tarjeta {
+    padding: 24px;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    background: var(--superficie);
+}
+
+.formulario {
+    display: grid;
+    gap: 16px;
+    margin: 0 0 16px;
+}
+
+label {
+    display: grid;
+    gap: 4px;
+    color: var(--texto-secundario);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+input, select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #7b8798;
+    border-radius: 6px;
+    background: var(--superficie);
+    color: var(--texto);
+    font: inherit;
+    font-weight: 400;
+}
+
+.mensaje {
+    margin: 0 0 16px;
+    padding: 12px 16px;
+    border-radius: 6px;
+}
+
+.mensaje-exito {
+    background: var(--exito-fondo);
+    color: var(--exito-texto);
+}
+
+.mensaje-error {
+    background: var(--error-fondo);
+    color: var(--error-texto);
+}
+
+.indicador-carga {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0 0;
+    color: var(--texto-secundario);
+}
+
+.indicador-giro {
+    width: 16px;
+    height: 16px;
+    border: 3px solid var(--borde);
+    border-top-color: var(--azul);
+    border-radius: 50%;
+    animation: giro 0.8s linear infinite;
+}
+
+@keyframes giro {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .indicador-giro {
+        animation: none;
+    }
+}
+
+/* Consulta: master-detail */
+.pagina-consulta {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+}
+
+.consulta {
+    display: grid;
+    flex: 1;
+    grid-template-columns: minmax(0, 65fr) minmax(0, 35fr);
+    min-height: 0;
+}
+
+.consulta-mapa {
+    min-height: 0;
+    background: #dfe5ee;
+}
+
+#mapaUbicaciones {
+    height: 100%;
+    padding: 0;
+    color: var(--texto-secundario);
+}
+
+.consulta-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-left: 1px solid var(--borde);
+    background: var(--superficie);
+}
+
+.filtro {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+    padding: 16px;
+    border-bottom: 1px solid var(--borde);
+}
+
+.filtro-cantidad {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--texto-secundario);
+    font-size: 0.9rem;
+}
+
+.lista-bolsines {
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    padding: 8px;
+    overflow-y: auto;
+    list-style: none;
+}
+
+.lista-bolsines li + li {
+    margin-top: 8px;
+}
+
+.tarjeta-bolsin {
+    display: grid;
+    gap: 2px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--borde);
+    border-left: 5px solid var(--azul);
+    border-radius: 6px;
+    background: var(--superficie);
+    color: var(--texto);
+    font: inherit;
+    font-size: 0.92rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.tarjeta-bolsin:hover:enabled {
+    background: var(--azul-claro);
+}
+
+.tarjeta-bolsin:disabled {
+    border-left-color: var(--aviso-texto);
+    background: var(--fondo);
+    color: var(--texto);
+    cursor: not-allowed;
+}
+
+.seleccionado .tarjeta-bolsin {
+    border-color: var(--naranja);
+    border-left-color: var(--naranja);
+    background: var(--azul-claro);
+}
+
+.tarjeta-titulo {
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.tarjeta-tiempo {
+    color: var(--texto-secundario);
+}
+
+.aviso-sin-ubicacion {
+    justify-self: start;
+    margin-top: 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--aviso-fondo);
+    color: var(--aviso-texto);
+    font-weight: 600;
+}
+
+.panel-acciones {
+    margin: 0;
+    padding: 12px 16px;
+    border-top: 1px solid var(--borde);
+    text-align: right;
+}
+
+.estado-vacio {
+    margin: auto;
+    padding: 24px;
+    text-align: center;
+}
+
+/* Modal de confirmación */
+.modal {
+    width: min(460px, calc(100vw - 32px));
+    padding: 24px;
+    border: 0;
+    border-radius: 8px;
+    color: var(--texto);
+}
+
+.modal::backdrop {
+    background: rgb(15 23 42 / 55%);
+}
+
+.modal-resumen {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 16px;
+    margin: 0 0 24px;
+}
+
+.modal-resumen dt {
+    color: var(--texto-secundario);
+}
+
+.modal-resumen dd {
+    margin: 0;
+    font-weight: 600;
+}
+
+.modal-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin: 0;
+}
+
+/* Responsive: la lista va debajo del mapa */
+@media (max-width: 768px) {
+    .encabezado {
+        flex-wrap: wrap;
+        padding: 12px 16px;
+    }
+
+    .pagina-consulta {
+        height: auto;
+        min-height: 100dvh;
+    }
+
+    .consulta {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .consulta-mapa {
+        height: 50dvh;
+    }
+
+    .consulta-panel {
+        border-top: 1px solid var(--borde);
+        border-left: 0;
+    }
+
+    .lista-bolsines {
+        overflow-y: visible;
+    }
+}

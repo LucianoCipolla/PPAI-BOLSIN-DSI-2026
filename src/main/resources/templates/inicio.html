@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Inicio</title>
+    <link rel="stylesheet" th:href="@{/css/estilos.css}">
+</head>
+<body>
+<header class="encabezado">
+    <strong class="encabezado-sistema">Sistema de Bolsines</strong>
+    <span th:if="${usuarioActual}" th:text="${nombreEmpleado}"></span>
+    <form th:if="${usuarioActual}" th:action="@{/logout}" method="post"><button type="submit" class="boton-encabezado">Cerrar sesión</button></form>
+</header>
+<main class="contenedor-angosto">
+    <p class="mensaje mensaje-exito" th:if="${mensajeExito}" th:text="${mensajeExito}" role="status"></p>
+    <p class="mensaje mensaje-error" th:if="${mensajeError}" th:text="${mensajeError}" role="alert"></p>
+
+    <section class="tarjeta">
+        <h1>Opciones</h1>
+        <form id="formIngresarComo" class="formulario" th:action="@{/ingresar}" method="post">
+            <label>Ingresar como
+                <select id="cmbIngresarComo" name="usuario" autocomplete="off" required>
+                    <option value="" disabled th:selected="${usuarioActual == null}">Elegí un usuario</option>
+                    <option th:each="u : ${usuarios}" th:value="${u.usuario}" th:text="${u.usuario}"
+                            th:selected="${u.usuario == usuarioActual}"></option>
+                </select>
+            </label>
+        </form>
+        <a id="opcConsultarBolsines" class="boton boton-primario" th:if="${usuarioActual}" th:href="@{/consultar-bolsines}">Consultar seguimiento de bolsines</a>
+        <p th:unless="${usuarioActual}">Elegí un usuario para ver la opción de consulta.</p>
+        <p id="indicadorConsultandoGPS" class="indicador-carga" role="status" hidden>
+            <span class="indicador-giro" aria-hidden="true"></span>Consultando GPS…
+        </p>
+    </section>
+</main>
+<script>
+    // Sesión simulada: elegir un usuario la crea en el servidor.
+    document.getElementById("cmbIngresarComo").addEventListener("change", () => {
+        document.getElementById("formIngresarComo").submit();
+    });
+
+    // La consulta al GPS ocurre mientras el servidor arma la pantalla: el indicador se ve durante esa espera.
+    const indicadorConsultandoGPS = document.getElementById("indicadorConsultandoGPS");
+    document.getElementById("opcConsultarBolsines")?.addEventListener("click", () => {
+        indicadorConsultandoGPS.hidden = false;
+    });
+    window.addEventListener("pageshow", () => {
+        indicadorConsultandoGPS.hidden = true;
+    });
+</script>
+</body>
+</html>
