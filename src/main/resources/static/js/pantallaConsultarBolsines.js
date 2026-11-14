@@ -5,7 +5,7 @@ const interfazGoogleMaps = new InterfazGoogleMaps("mapaUbicaciones", claveGoogle
 
 const MINUTOS_POR_HORA = 60;
 const MS_POR_MINUTO = 60000;
-
+const HORAS_POR_DIA = 24;
 // CU36 pasos 7 y 8
 async function seleccionarBolsin(nroBolsin) {
     marcarSeleccionEnLista(nroBolsin);
@@ -75,7 +75,12 @@ function formatearHaceCuanto(fechaHora) {
     if (minutos < MINUTOS_POR_HORA) {
         return `hace ${minutos} min`;
     }
-    return `hace ${Math.floor(minutos / MINUTOS_POR_HORA)} h ${minutos % MINUTOS_POR_HORA} min`;
+    const horas = Math.floor(minutos / MINUTOS_POR_HORA);
+    if (horas < HORAS_POR_DIA) {
+        return `hace ${horas} h ${minutos % MINUTOS_POR_HORA} min`;
+    }
+    const dias = Math.floor(horas / HORAS_POR_DIA);
+    return dias === 1 ? "hace 1 día" : `hace ${dias} días`;
 }
 
 function actualizarHaceCuanto() {
