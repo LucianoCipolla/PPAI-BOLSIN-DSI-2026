@@ -19,12 +19,12 @@ public class ServicioXTR4500L {
     public String getBolsinLocation(String claveAPI, int nroBolsin, String codCMOrigen) {
         String respuesta;
         try {
-            respuesta = restClient.get()
+                        respuesta = restClient.get()
                     .uri(uri -> uri.path("/getBolsinLocation")
-                            .queryParam("apiKey", claveAPI)
-                            .queryParam("nroBolsin", nroBolsin)
-                            .queryParam("codCMOrigen", codCMOrigen)
+                            .queryParam("numeroBolsin", nroBolsin)
+                            .queryParam("codigoComisionMedicaOrigen", codCMOrigen)
                             .build())
+                    .header("X-API-Key", claveAPI)
                     .retrieve()
                     .body(String.class);
         } catch (RestClientException e) {

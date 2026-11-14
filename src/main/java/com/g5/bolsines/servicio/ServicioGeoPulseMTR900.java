@@ -16,16 +16,16 @@ public class ServicioGeoPulseMTR900 {
         this.restClient = RestClient.builder().baseUrl(urlServicio).requestFactory(timeouts).build();
     }
 
-    public String[][] fetchCargoPositions(String claveAPI, int nroBolsin) {
-        String[][] respuesta;
+        public Object[][] fetchCargoPositions(String claveAPI, int nroBolsin) {
+        Object[][] respuesta;
         try {
             respuesta = restClient.get()
                     .uri(uri -> uri.path("/fetchCargoPositions")
-                            .queryParam("apiKey", claveAPI)
-                            .queryParam("nroBolsin", nroBolsin)
+                            .queryParam("numeroBolsin", nroBolsin)
                             .build())
+                    .header("X-API-Key", claveAPI)
                     .retrieve()
-                    .body(String[][].class);
+                    .body(Object[][].class);
         } catch (RestClientException e) {
             throw new ServicioGPSException("GeoPulse MTR-900 no informó el bolsín " + nroBolsin, e);
         }

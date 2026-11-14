@@ -9,6 +9,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -29,16 +31,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Flujo básico, A1 y A3 de punta a punta, con los datos iniciales y el simulador por HTTP real. */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, properties = {
-        "server.port=18082",
-        "gps.base-url=http://localhost:18082/simulador-gps",
-        "spring.datasource.url=jdbc:h2:mem:flujos"})
+/** Flujo básico, A1 y A3 de punta a punta, con los datos iniciales y un doble de la API de la cátedra. */
+@SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:flujos")
 @AutoConfigureMockMvc
 @ExtendWith(OutputCaptureExtension.class)
 class PantallaConsultarBolsinesTest {
 
     private static final String PANTALLA = "/consultar-bolsines";
+    private static final ApiCatedraFalsa API_CATEDRA = new ApiCatedraFalsa();
+
+    @DynamicPropertySource
+    static void apuntarALaApiDeLaCatedra(DynamicPropertyRegistry propiedades) {
+        propiedades.add("gps.base-url", API_CATEDRA::getUrl);
+    }
 
     @Autowired
     private MockMvc mvc;
@@ -72,71 +77,71 @@ class PantallaConsultarBolsinesTest {
 
     @Test
     void flujoBasicoNotificaAlGCMDeLaCMDestino(CapturedOutput salida) throws Exception {
-        MockHttpSession sesion = iniciarSesion("eb.cba");
+        MockHttpSession sesion = iniciarSesion("eb.cba-01");
 
         Map<Integer, Map<String, Object>> ubicaciones = consultar(sesion);
-        assertEquals(java.util.Set.of(1001, 1002, 1003, 1004, 1005, 1007), ubicaciones.keySet());
-        assertTrue((Boolean) ubicaciones.get(1001).get("disponible"));
-        assertNotNull(ubicaciones.get(1005).get("latitud"));
+        assertEquals(java.util.Set.of(101, 111), ubicaciones.keySet());
+        assertTrue((Boolean) ubicaciones.get(101).get("disponible"));
+        assertNotNull(ubicaciones.get(101).get("latitud"));
 
-        mvc.perform(post(PANTALLA + "/seleccion").param("nroBolsin", "1001").session(sesion))
+        mvc.perform(post(PANTALLA + "/seleccion").param("nroBolsin", "101").session(sesion))
                 .andExpect(status().isOk())
                 .andExpect(content().json("{\"abrir\":\"modalConfirmacionCorreo\"}"));
         mvc.perform(post(PANTALLA + "/confirmacion").session(sesion))
                 .andExpect(redirectedUrl("/inicio"))
                 .andExpect(flash().attributeExists("mensajeExito"));
 
-        assertTrue(salida.getOut().contains("Mail a gcm.ros@bolsines.test: bolsín 1001"));
+        assertTrue(salida.getOut().contains("Mail a gcm.ros-02@bolsines.test: bolsín 101"));
     }
 
     @Test
     @SuppressWarnings("unchecked")
     void cadaConsultaReemplazaLosDatosDelGestor() throws Exception {
-        MockHttpSession sesion = iniciarSesion("eb.cba");
+        MockHttpSession sesion = iniciarSesion("eb.cba-01");
 
         consultar(sesion);
         MvcResult segunda = mvc.perform(get(PANTALLA).session(sesion)).andReturn();
 
-        assertEquals(6, ((List<Map<String, Object>>) segunda.getModelAndView().getModel().get("ubicaciones")).size());
+        assertEquals(2, ((List<Map<String, Object>>) segunda.getModelAndView().getModel().get("ubicaciones")).size());
     }
 
     @Test
     void laPantallaNoMuestraElNombreDelEmpleado() throws Exception {
-        MockHttpSession sesion = iniciarSesion("eb.cba");
+        MockHttpSession sesion = iniciarSesion("eb.cba-01");
 
         mvc.perform(get(PANTALLA).session(sesion)).andExpect(model().attributeDoesNotExist("nombreEmpleado"));
     }
 
     @Test
     void a1SinBolsinesEnviadosMuestraElEstadoVacio() throws Exception {
-        MockHttpSession sesion = iniciarSesion("eb.pna");
+        MockHttpSession sesion = iniciarSesion("eb.juj-01");
 
         MvcResult resultado = mvc.perform(get(PANTALLA).session(sesion))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeDoesNotExist("seleccionHabilitada"))
                 .andReturn();
 
-        assertTrue(resultado.getResponse().getContentAsString().contains("No hay bolsines enviados desde CM Paraná"));
+        assertTrue(resultado.getResponse().getContentAsString().contains("No hay bolsines enviados desde CM Jujuy"));
     }
 
     @Test
     void a3ElBolsinSinUbicacionNoSePuedeNotificar() throws Exception {
-        MockHttpSession sesion = iniciarSesion("eb.cba");
+        MockHttpSession sesion = iniciarSesion("eb.cba-01");
 
         Map<Integer, Map<String, Object>> ubicaciones = consultar(sesion);
-        assertFalse((Boolean) ubicaciones.get(1007).get("disponible"));
-        assertNull(ubicaciones.get(1007).get("latitud"));
+        assertFalse((Boolean) ubicaciones.get(111).get("disponible"));
+        assertNull(ubicaciones.get(111).get("latitud"));
 
-        mvc.perform(post(PANTALLA + "/seleccion").param("nroBolsin", "1007").session(sesion));
+        mvc.perform(post(PANTALLA + "/seleccion").param("nroBolsin", "111").session(sesion));
         mvc.perform(post(PANTALLA + "/confirmacion").session(sesion))
                 .andExpect(flash().attributeExists("mensajeError"));
     }
 
     @Test
     void cancelarLimpiaElGestorYVuelveAInicio() throws Exception {
-        MockHttpSession sesion = iniciarSesion("eb.cba");
+        MockHttpSession sesion = iniciarSesion("eb.cba-01");
         consultar(sesion);
-        mvc.perform(post(PANTALLA + "/seleccion").param("nroBolsin", "1001").session(sesion));
+        mvc.perform(post(PANTALLA + "/seleccion").param("nroBolsin", "101").session(sesion));
 
         mvc.perform(post(PANTALLA + "/cancelar").session(sesion)).andExpect(redirectedUrl("/inicio"));
 
@@ -156,8 +161,8 @@ class PantallaConsultarBolsinesTest {
                 .andReturn().getResponse().getContentAsString();
 
         assertTrue(html.contains("Ingresar como"));
-        assertTrue(html.contains("value=\"eb.cba\""));
-        assertTrue(html.contains("value=\"eb.pna\""));
+        assertTrue(html.contains("value=\"eb.cba-01\""));
+        assertTrue(html.contains("value=\"eb.juj-01\""));
         assertFalse(html.contains("id=\"opcConsultarBolsines\""));
     }
 
@@ -165,27 +170,27 @@ class PantallaConsultarBolsinesTest {
     void elegirUnUsuarioPersisteLaSesionYHabilitaLaConsulta() throws Exception {
         long sesionesPrevias = repositorioSesion.count();
 
-        MockHttpSession sesion = iniciarSesion("eb.cba");
+        MockHttpSession sesion = iniciarSesion("eb.cba-01");
 
         assertEquals(sesionesPrevias + 1, repositorioSesion.count());
         String html = mvc.perform(get("/inicio").session(sesion))
                 .andExpect(status().isOk())
-                .andExpect(model().attribute("usuarioActual", "eb.cba"))
+                .andExpect(model().attribute("usuarioActual", "eb.cba-01"))
                 .andReturn().getResponse().getContentAsString();
         assertTrue(html.contains("id=\"opcConsultarBolsines\""));
     }
 
     @Test
     void cambiarDeUsuarioNoArrastraElCUDelAnterior() throws Exception {
-        MockHttpSession sesionCba = iniciarSesion("eb.cba");
+        MockHttpSession sesionCba = iniciarSesion("eb.cba-01");
         consultar(sesionCba);
-        mvc.perform(post(PANTALLA + "/seleccion").param("nroBolsin", "1001").session(sesionCba));
+        mvc.perform(post(PANTALLA + "/seleccion").param("nroBolsin", "101").session(sesionCba));
 
-        MockHttpSession sesionPna = ingresarComo("eb.pna", sesionCba);
+        MockHttpSession sesionJuj = ingresarComo("eb.juj-01", sesionCba);
 
-        mvc.perform(post(PANTALLA + "/confirmacion").session(sesionPna))
+        mvc.perform(post(PANTALLA + "/confirmacion").session(sesionJuj))
                 .andExpect(flash().attributeExists("mensajeError"));
-        assertTrue(consultar(sesionPna).isEmpty());
+        assertTrue(consultar(sesionJuj).isEmpty());
     }
 
     @Test
@@ -201,7 +206,7 @@ class PantallaConsultarBolsinesTest {
 
     @Test
     void cerrarSesionVuelveAInicioSinUsuario() throws Exception {
-        MockHttpSession sesion = iniciarSesion("eb.cba");
+        MockHttpSession sesion = iniciarSesion("eb.cba-01");
 
         mvc.perform(post("/logout").session(sesion)).andExpect(redirectedUrl("/inicio"));
 

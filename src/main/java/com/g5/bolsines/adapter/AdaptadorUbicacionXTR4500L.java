@@ -40,12 +40,12 @@ public class AdaptadorUbicacionXTR4500L implements IAdaptadorUbicacionBolsin {
     @Override
     public void adaptarDatosUbicacion() {
         try {
-            JsonNode json = new ObjectMapper().readTree(datosUbicacionBolsin);
+            JsonNode item = new ObjectMapper().readTree(datosUbicacionBolsin).required("items").required(0);
             datosUbicacionAdaptados = new Object[]{
-                    json.required("bolsinId").asInt(),
-                    json.required("lat").asDouble(),
-                    json.required("lon").asDouble(),
-                    LocalDateTime.parse(json.required("lastUpdate").asText())
+                    item.required("numeroBolsin").asInt(),
+                    item.required("latitud").asDouble(),
+                    item.required("longitud").asDouble(),
+                    LocalDateTime.parse(item.required("fechaHoraUltimaActualizacion").asText())
             };
         } catch (JsonProcessingException | IllegalArgumentException | DateTimeParseException e) {
             throw new UbicacionNoDisponibleException("Respuesta inválida de XTR-4500L: " + datosUbicacionBolsin, e);

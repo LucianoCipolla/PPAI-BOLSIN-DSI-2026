@@ -4,13 +4,9 @@ import com.g5.bolsines.servicio.ServicioGPSException;
 import com.g5.bolsines.servicio.ServicioNavTrackQX7A;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 public class AdaptadorUbicacionNavTrackQX7A implements IAdaptadorUbicacionBolsin {
-
-    private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-
     private final String claveAPI;
     private final ServicioNavTrackQX7A servicio;
     private String datosUbicacionBolsin;
@@ -48,7 +44,7 @@ public class AdaptadorUbicacionNavTrackQX7A implements IAdaptadorUbicacionBolsin
                     Integer.valueOf(campos[0]),
                     Double.valueOf(campos[1]),
                     Double.valueOf(campos[2]),
-                    LocalDateTime.parse(campos[3], FORMATO_FECHA)
+                    LocalDateTime.parse(campos[3])
             };
         } catch (NumberFormatException | DateTimeParseException e) {
             throw new UbicacionNoDisponibleException("Respuesta inválida de NavTrack QX-7A: " + datosUbicacionBolsin, e);

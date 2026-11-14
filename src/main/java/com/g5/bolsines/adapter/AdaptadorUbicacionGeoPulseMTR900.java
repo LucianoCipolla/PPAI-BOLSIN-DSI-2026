@@ -4,17 +4,13 @@ import com.g5.bolsines.servicio.ServicioGPSException;
 import com.g5.bolsines.servicio.ServicioGeoPulseMTR900;
 
 import java.time.DateTimeException;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 public class AdaptadorUbicacionGeoPulseMTR900 implements IAdaptadorUbicacionBolsin {
 
-    private static final ZoneId ZONA_ARGENTINA = ZoneId.of("America/Argentina/Buenos_Aires");
-
     private final String claveAPI;
     private final ServicioGeoPulseMTR900 servicio;
-    private String[][] datosUbicacionBolsin;
+    private Object[][] datosUbicacionBolsin;
     private Object[] datosUbicacionAdaptados;
 
     public AdaptadorUbicacionGeoPulseMTR900(String claveAPI, String urlServicio) {
@@ -43,15 +39,15 @@ public class AdaptadorUbicacionGeoPulseMTR900 implements IAdaptadorUbicacionBols
         if (datosUbicacionBolsin.length == 0 || datosUbicacionBolsin[0].length != 4) {
             throw new UbicacionNoDisponibleException("Respuesta inválida de GeoPulse MTR-900");
         }
-        String[] fila = datosUbicacionBolsin[0];
+        Object[] fila = datosUbicacionBolsin[0];
         try {
             datosUbicacionAdaptados = new Object[]{
-                    Integer.valueOf(fila[0]),
-                    Double.valueOf(fila[1]),
-                    Double.valueOf(fila[2]),
-                    LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.parseLong(fila[3])), ZONA_ARGENTINA)
+                    ((Number) fila[0]).intValue(),
+                    ((Number) fila[1]).doubleValue(),
+                    ((Number) fila[2]).doubleValue(),
+                    LocalDateTime.parse((String) fila[3])
             };
-        } catch (NumberFormatException | DateTimeException e) {
+        } catch (ClassCastException | NullPointerException | DateTimeException e) {
             throw new UbicacionNoDisponibleException("Respuesta inválida de GeoPulse MTR-900", e);
         }
     } // CU36 pasos 4 y 5

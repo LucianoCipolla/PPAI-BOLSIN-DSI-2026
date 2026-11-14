@@ -14,11 +14,12 @@ class ProveedorGPSFalso implements AutoCloseable {
 
     private final HttpServer servidor;
     private String consultaRecibida;
-
+    private String claveRecibida;
     ProveedorGPSFalso(int estado, String cuerpo) throws IOException {
         servidor = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
         servidor.createContext("/", intercambio -> {
             consultaRecibida = intercambio.getRequestURI().toString();
+            claveRecibida = intercambio.getRequestHeaders().getFirst("X-API-Key");
             byte[] respuesta = cuerpo.getBytes(StandardCharsets.UTF_8);
             intercambio.getResponseHeaders().set("Content-Type", "application/json");
             intercambio.sendResponseHeaders(estado, respuesta.length);
@@ -35,7 +36,9 @@ class ProveedorGPSFalso implements AutoCloseable {
     String getConsultaRecibida() {
         return consultaRecibida;
     }
-
+    String getClaveRecibida() {
+        return claveRecibida;
+    }
     @Override
     public void close() {
         servidor.stop(0);

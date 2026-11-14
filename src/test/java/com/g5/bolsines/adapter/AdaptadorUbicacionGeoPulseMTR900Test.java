@@ -12,38 +12,51 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class AdaptadorUbicacionGeoPulseMTR900Test {
-
     @Test
     void adaptaLaMatrizDelProveedorYReenviaSoloElNumero() throws IOException {
-        try (ProveedorGPSFalso proveedor = new ProveedorGPSFalso(200, "[[\"1005\",\"-33.12\",\"-64.35\",\"1794143700\"]]")) {
+        try (ProveedorGPSFalso proveedor = new ProveedorGPSFalso(200,
+                "[[103,-32.8895,-68.8458,\"2026-03-07T12:35:04\"]]")) {
             IAdaptadorUbicacionBolsin adaptador = new AdaptadorUbicacionGeoPulseMTR900("clave", proveedor.getUrl());
 
-            Object[] ubicacion = adaptador.recibirUbicacionBolsin(1005, "CBA", "PNA");
+            Object[] ubicacion = adaptador.recibirUbicacionBolsin(103, "CM-MDZ-03", "CM-BA-01");
 
-            assertArrayEquals(new Object[]{1005, -33.12, -64.35, LocalDateTime.of(2026, 11, 8, 10, 15)}, ubicacion);
-            assertEquals("/fetchCargoPositions?apiKey=clave&nroBolsin=1005", proveedor.getConsultaRecibida());
+            assertArrayEquals(new Object[]{103, -32.8895, -68.8458, LocalDateTime.of(2026, 3, 7, 12, 35, 4)}, ubicacion);
+            assertEquals("/fetchCargoPositions?numeroBolsin=103", proveedor.getConsultaRecibida());
+            assertEquals("clave", proveedor.getClaveRecibida());
         }
     }
 
     @Test
-    void traduceLaFallaDelServicio() throws IOException {
-        try (ProveedorGPSFalso proveedor = new ProveedorGPSFalso(503, "")) {
+    void traduceElBolsinQueElGPSNoConoce() throws IOException {
+        try (ProveedorGPSFalso proveedor = new ProveedorGPSFalso(404,
+                "{\"error\":\"BOLSIN_NO_ENCONTRADO\",\"status\":404}")) {
             IAdaptadorUbicacionBolsin adaptador = new AdaptadorUbicacionGeoPulseMTR900("clave", proveedor.getUrl());
 
             UbicacionNoDisponibleException excepcion = assertThrows(UbicacionNoDisponibleException.class,
-                    () -> adaptador.recibirUbicacionBolsin(1005, "CBA", "PNA"));
+                    () -> adaptador.recibirUbicacionBolsin(111, "CM-CBA-01", "CM-ROS-02"));
 
             assertInstanceOf(ServicioGPSException.class, excepcion.getCause());
         }
     }
 
     @Test
-    void rechazaUnaRespuestaInvalida() throws IOException {
+    void rechazaUnaRespuestaVacia() throws IOException {
         try (ProveedorGPSFalso proveedor = new ProveedorGPSFalso(200, "[]")) {
             IAdaptadorUbicacionBolsin adaptador = new AdaptadorUbicacionGeoPulseMTR900("clave", proveedor.getUrl());
 
             assertThrows(UbicacionNoDisponibleException.class,
-                    () -> adaptador.recibirUbicacionBolsin(1005, "CBA", "PNA"));
+                    () -> adaptador.recibirUbicacionBolsin(103, "CM-MDZ-03", "CM-BA-01"));
+        }
+    }
+
+    @Test
+    void rechazaUnaCeldaConTipoInesperado() throws IOException {
+        try (ProveedorGPSFalso proveedor = new ProveedorGPSFalso(200,
+                "[[103,\"-32.8895\",-68.8458,\"2026-03-07T12:35:04\"]]")) {
+            IAdaptadorUbicacionBolsin adaptador = new AdaptadorUbicacionGeoPulseMTR900("clave", proveedor.getUrl());
+
+            assertThrows(UbicacionNoDisponibleException.class,
+                    () -> adaptador.recibirUbicacionBolsin(103, "CM-MDZ-03", "CM-BA-01"));
         }
     }
 }
