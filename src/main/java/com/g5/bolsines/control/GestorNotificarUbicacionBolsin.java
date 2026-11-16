@@ -12,8 +12,7 @@ public class GestorNotificarUbicacionBolsin {
 
     private static final Logger log = LoggerFactory.getLogger(GestorNotificarUbicacionBolsin.class);
 
-    public boolean notificarUbicacion(String mailGCM, int nroBolsin, LocalDateTime fechaHora,
-                                      double latitud, double longitud) {
+    public boolean notificarUbicacion(String mailGCM, int nroBolsin, LocalDateTime fechaHora, double latitud, double longitud) {
         log.info("[CU 30 simulado] Mail a {}: bolsín {} en ({}, {}) a las {}",
                 mailGCM, nroBolsin, latitud, longitud, fechaHora);
         return true;

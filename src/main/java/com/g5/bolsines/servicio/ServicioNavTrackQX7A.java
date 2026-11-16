@@ -19,7 +19,7 @@ public class ServicioNavTrackQX7A {
     public String retrieveTrackingData(String claveAPI, int nroBolsin, String codCMDestino) {
         String respuesta;
         try {
-                        respuesta = restClient.get()
+            respuesta = restClient.get()
                     .uri(uri -> uri.path("/retrieveTrackingData")
                             .queryParam("numeroBolsin", nroBolsin)
                             .queryParam("codigoComisionMedicaDestino", codCMDestino)

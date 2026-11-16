@@ -81,8 +81,7 @@ public class CargaDatosIniciales implements CommandLineRunner {
         cargarCM("CM-LPL-01", "La Plata", "Calle 7 900, La Plata", "0221-4000000");
     }
 
-
-        private void cargarCM(String codigo, String nombre, String direccion, String telefono) {
+    private void cargarCM(String codigo, String nombre, String direccion, String telefono) {
         String mail = "cm." + alias(codigo) + "@bolsines.test";
         cms.put(codigo, repositorioCM.save(new CM(codigo, "CM " + nombre, direccion, mail, telefono)));
     }
@@ -107,7 +106,7 @@ public class CargaDatosIniciales implements CommandLineRunner {
         }
     }
 
-        private void cargarBolsines() {
+    private void cargarBolsines() {
         cargarBolsin(101, XTR, "CM-CBA-01", "CM-ROS-02", "Enviado");
         cargarBolsin(102, NAVTRACK, "CM-ROS-02", "CM-MDZ-03", "Enviado");
         cargarBolsin(103, GEOPULSE, "CM-MDZ-03", "CM-BA-01", "Enviado");

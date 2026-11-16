@@ -1,0 +1,78 @@
+@startuml diagrama-secuencia-xtr4500l
+' PPAI 2026 - DSI 3K1 - Grupo 5
+' Vista dinámica de la realización de caso de uso de diseño
+' CU 36 "Consultar seguimiento de bolsines": parte del escenario rediseñada con el patrón Adapter (pasos 4 y 5)
+' Modelo de GPS: XTR-4500L
+'
+' Convenciones:
+' - Representación icónica de boundary, control y entidad.
+' - :Bolsin representa a todos los bolsines enviados (se recorren con loop).
+' - Sin mensajes de retorno.
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam sequence {
+  ArrowColor #1F3A68
+  LifeLineBorderColor #8A9BB8
+  LifeLineBackgroundColor #EAF1FB
+  ParticipantBorderColor #1F3A68
+  ParticipantBackgroundColor #FFFFFF
+  GroupBorderColor #1F3A68
+  GroupHeaderFontColor #1F3A68
+}
+hide footbox
+
+title CU 36 – Consultar seguimiento de bolsines\nVista dinámica de la realización de CU de diseño – patrón Adapter (GPS XTR-4500L)
+
+control ":GestorConsultarBolsines" as gestor
+entity ":Bolsin" as bolsin
+entity "origen:CM" as origen
+entity "destino:CM" as destino
+boundary ":InterfazGPSTracker" as interfaz
+participant ":AdaptadorUbicacionXTR4500L" as adaptador
+participant ":ServicioXTR4500L" as servicio
+
+activate gestor
+gestor -> gestor : buscarDatosLocBolsines()
+activate gestor
+
+loop por cada bolsín de bolsinesEnviados
+  gestor -> bolsin : getNumeroBolsin()
+  gestor -> bolsin : getCMOrigen()
+  gestor -> origen : getCodigo()
+  gestor -> bolsin : getCMDestino()
+  gestor -> destino : getCodigo()
+  gestor -> bolsin : getModeloGPS()
+
+  gestor -> interfaz : buscarUbicacionBolsin(nroBolsin, codCMOrigen, codCMDestino, modeloGPS)
+  activate interfaz
+
+  create adaptador
+  interfaz -> adaptador : new(claveAPI, urlServicio)
+  activate adaptador
+  create servicio
+  adaptador -> servicio : new(urlServicio)
+  deactivate adaptador
+
+  interfaz -> adaptador : recibirUbicacionBolsin(nroBolsin, codCMOrigen, codCMDestino)
+  activate adaptador
+
+  adaptador -> adaptador : solicitarUbicacionBolsin(nroBolsin, codCMOrigen, codCMDestino)
+  activate adaptador
+  adaptador -> servicio : getBolsinLocation(claveAPI, nroBolsin, codCMOrigen)
+  activate servicio
+  deactivate servicio
+  deactivate adaptador
+
+  adaptador -> adaptador : adaptarDatosUbicacion()
+  activate adaptador
+  deactivate adaptador
+
+  deactivate adaptador
+  deactivate interfaz
+end
+
+deactivate gestor
+@enduml

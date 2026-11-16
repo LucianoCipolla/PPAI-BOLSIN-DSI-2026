@@ -1,0 +1,309 @@
+@startuml diagrama-clases-diseno
+' PPAI 2026 - DSI 3K1 - Grupo 5
+' Vista estática de la realización de caso de uso de diseño
+' CU 36 "Consultar seguimiento de bolsines" rediseñado con el patrón Adapter (GoF)
+'
+' Convenciones:
+' - Visibilidad: + público, - privado. Tipos de Java.
+' - Atributos de referencia entre entidades: sobre la relación (nombre de rol), no dentro de la clase.
+' - Control -> entidad: dependencia (convención de la cátedra).
+' - Solo se muestran los métodos que usa la vista dinámica del CU 36.
+' - Constructores con el estereotipo <<create>> y el nombre new().
+
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 70
+skinparam defaultFontName Arial
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #1F3A68
+  ArrowColor #1F3A68
+  StereotypeFontColor #1F3A68
+}
+skinparam class<<interface>> {
+  BackgroundColor #EAF1FB
+}
+skinparam class<<exception>> {
+  BackgroundColor #F5F5F5
+}
+hide empty members
+hide circle
+
+title CU 36 – Consultar seguimiento de bolsines\nVista estática de la realización de CU de diseño (patrón Adapter)
+
+' =====================================================================
+'  BOUNDARY
+' =====================================================================
+class PantallaConsultarBolsines <<boundary>> {
+  -lblCMUsuario: Label
+  -mapaUbicaciones: Mapa
+  -listaBolsines: Lista
+  -txtFiltroPrecinto: TextBox
+  -cmbFiltroCMDestino: ComboBox
+  -btnCancelar: Button
+  -modalConfirmacionCorreo: Modal
+  -claveGoogleMaps: String
+  --
+  +registrarOpcConsultasUbBolsines(httpSession: HttpSession, model: Model): String
+  -habilitarVentana(model: Model): void
+  -mostrarCM(cm: CM, model: Model): void
+  -mostrarMapaConUbicaciones(ubicaciones: List<Map<String, Object>>, model: Model): void
+  -solicitarSelecBolsin(model: Model): void
+  +tomarFiltroBolsines(precinto: String, cmDestino: String): void
+  +tomarSelecBolsinMapa(nroBolsin: int): Map<String, String>
+  -solicitarEnvioCorreo(): Map<String, String>
+  +tomarConfirmEnvioCorreo(redirect: RedirectAttributes): String
+  -informarEjecucionExitosa(redirect: RedirectAttributes): void
+  +cancelar(): String
+}
+
+class InterfazGoogleMaps <<boundary>> {
+  +mostrarMapaConUbicaciones(ubicaciones: List<Map<String, Object>>): void
+  +marcarSeleccion(nroBolsin: int): void
+  +filtrarMarcadores(nrosVisibles: List<Integer>): void
+}
+
+class InterfazGPSTracker <<boundary>> {
+  -clavesAPI: Map<String, String>
+  -urlsServicios: Map<String, String>
+  --
+  +buscarUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String, modeloGPS: String): Object[]
+}
+
+' =====================================================================
+'  CONTROL
+' =====================================================================
+class GestorConsultarBolsines <<control>> {
+  -cmUsuarioLogueado: CM
+  -bolsinesEnviados: List<Bolsin>
+  -datosLocBolsines: Map<Integer, Object[]>
+  -bolsinSeleccionado: Bolsin
+  -mailGCM: String
+  --
+  +consultarUbBolsines(sesion: Sesion): Object[]
+  -buscarCMUsuarioLogueado(sesion: Sesion): void
+  -buscarBolsinesEnviados(): void
+  -buscarDatosLocBolsines(): void
+  +tomarSelecBolsinMapa(nroBolsin: int): void
+  +tomarConfirmEnvioCorreo(): boolean
+  -buscarMailGCM(): void
+  -llamarCUNotificarUbicacionDeBolsines(): boolean
+  +finCU(): void
+}
+
+class GestorNotificarUbicacionBolsin <<control>> {
+  +notificarUbicacion(mailGCM: String, nroBolsin: int, fechaHora: LocalDateTime, latitud: double, longitud: double): boolean
+}
+
+' =====================================================================
+'  ENTIDADES
+' =====================================================================
+class Sesion <<entity>> {
+  -fechaHoraInicio: LocalDateTime
+  -fechaHoraFin: LocalDateTime
+  --
+  +getUserLog(): Usuario
+}
+
+class Usuario <<entity>> {
+  -usuario: String
+  --
+  +getEmp(): Empleado
+}
+
+class Empleado <<entity>> {
+  -nombre: String
+  -apellido: String
+  -mail: String
+  --
+  +getCM(): CM
+  +esTuCM(cm: CM): boolean
+  +sosGCM(): boolean
+  +getMail(): String
+}
+
+class Rol <<entity>> {
+  -nombre: String
+  -descripcion: String
+  --
+  +sosGCM(): boolean
+}
+
+class CM <<entity>> {
+  -codigo: String
+  -nombre: String
+  -direccion: String
+  -mail: String
+  -telefono: String
+  --
+  +getNombre(): String
+  +getCodigo(): String
+}
+
+class Bolsin <<entity>> {
+  -numeroBolsin: int
+  -numeroPrecinto: String
+  -fecha: LocalDate
+  -peso: double
+  -modeloGPS: String
+  --
+  +esTuCMOrigen(cm: CM): boolean
+  +sosEnviado(): boolean
+  +getNumeroBolsin(): int
+  +getNumeroPrecinto(): String
+  +getCMOrigen(): CM
+  +getCMDestino(): CM
+  +getModeloGPS(): String
+}
+
+class CambioEstadoBolsin <<entity>> {
+  -fechaHoraInicio: LocalDateTime
+  -fechaHoraFin: LocalDateTime
+  --
+  +sosActual(): boolean
+  +sosEnviado(): boolean
+}
+
+class Estado <<entity>> {
+  -nombre: String
+  -ambito: String
+  -descripcion: String
+  --
+  +sosEnviado(): boolean
+}
+
+' =====================================================================
+'  PATRÓN ADAPTER
+' =====================================================================
+interface IAdaptadorUbicacionBolsin <<interface>> {
+  +recibirUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String): Object[]
+  +solicitarUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String): void
+  +adaptarDatosUbicacion(): void
+}
+
+class AdaptadorUbicacionXTR4500L {
+  -claveAPI: String
+  -datosUbicacionBolsin: String
+  -datosUbicacionAdaptados: Object[]
+  --
+  <<create>> +new(claveAPI: String, urlServicio: String)
+  +recibirUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String): Object[]
+  +solicitarUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String): void
+  +adaptarDatosUbicacion(): void
+}
+
+class AdaptadorUbicacionNavTrackQX7A {
+  -claveAPI: String
+  -datosUbicacionBolsin: String
+  -datosUbicacionAdaptados: Object[]
+  --
+  <<create>> +new(claveAPI: String, urlServicio: String)
+  +recibirUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String): Object[]
+  +solicitarUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String): void
+  +adaptarDatosUbicacion(): void
+}
+
+class AdaptadorUbicacionGeoPulseMTR900 {
+  -claveAPI: String
+  -datosUbicacionBolsin: Object[][]
+  -datosUbicacionAdaptados: Object[]
+  --
+  <<create>> +new(claveAPI: String, urlServicio: String)
+  +recibirUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String): Object[]
+  +solicitarUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String): void
+  +adaptarDatosUbicacion(): void
+}
+
+class ServicioXTR4500L {
+  -restClient: RestClient
+  --
+  <<create>> +new(urlServicio: String)
+  +getBolsinLocation(claveAPI: String, nroBolsin: int, codCMOrigen: String): String
+}
+
+class ServicioNavTrackQX7A {
+  -restClient: RestClient
+  --
+  <<create>> +new(urlServicio: String)
+  +retrieveTrackingData(claveAPI: String, nroBolsin: int, codCMDestino: String): String
+}
+
+class ServicioGeoPulseMTR900 {
+  -restClient: RestClient
+  --
+  <<create>> +new(urlServicio: String)
+  +fetchCargoPositions(claveAPI: String, nroBolsin: int): Object[][]
+}
+
+class UbicacionNoDisponibleException <<exception>>
+
+
+' =====================================================================
+'  RELACIONES (las direcciones solo ordenan el dibujo)
+' =====================================================================
+
+' --- Boundary y control
+PantallaConsultarBolsines -left-> "1" InterfazGoogleMaps : -interfazGoogleMaps
+PantallaConsultarBolsines -down-> "1" GestorConsultarBolsines : -gestor
+GestorConsultarBolsines -left-> "1" GestorNotificarUbicacionBolsin : -gestorNotificarUbicacionBolsin
+InterfazGoogleMaps -[hidden]down-> GestorNotificarUbicacionBolsin
+' InterfazGPSTracker sube a la fila de la pantalla: el patrón arranca más arriba
+GestorConsultarBolsines -up-> "1" InterfazGPSTracker : -interfazGPSTracker
+PantallaConsultarBolsines -[hidden]right- InterfazGPSTracker
+
+' --- Control -> entidad (dependencias, convención de la cátedra)
+GestorConsultarBolsines .down.> Sesion
+GestorConsultarBolsines .down.> Empleado
+GestorConsultarBolsines .down.> CM
+GestorConsultarBolsines .down.> Bolsin
+PantallaConsultarBolsines ..> CM
+
+' --- Entidades
+'   Sesion
+'     |
+'   Usuario
+'     |
+'   Rol <- Empleado ----asignadoA----> CM
+'             ^                         ^
+'        responsable          cmOrigen / cmDestino
+'             |                         |
+'     CambioEstadoBolsin <--- cambioEstado --- Bolsin
+'             |
+'           Estado
+Sesion "*" -down-> "1" Usuario : -usuario
+Usuario "0..1" -down-> "1" Empleado : -empleado
+Empleado "*" -left-> "1" Rol : -rol
+Empleado "*" -right-> "1" CM : -asignadoA
+CambioEstadoBolsin "*" -up-> "1" Empleado : -responsable
+Bolsin "*" -up-> "1" CM : -cmOrigen
+Bolsin "*" -up-> "1" CM : -cmDestino
+Bolsin *-left-> "1..*" CambioEstadoBolsin : -cambioEstado
+CambioEstadoBolsin "*" -down-> "1" Estado : -estado
+
+' --- Patrón Adapter: Client, Target, Adapters y Adaptees de arriba hacia abajo
+InterfazGPSTracker .down.> IAdaptadorUbicacionBolsin
+InterfazGPSTracker .down.> AdaptadorUbicacionXTR4500L
+InterfazGPSTracker .down.> AdaptadorUbicacionNavTrackQX7A
+InterfazGPSTracker .down.> AdaptadorUbicacionGeoPulseMTR900
+InterfazGPSTracker ..> UbicacionNoDisponibleException
+
+IAdaptadorUbicacionBolsin <|.down. AdaptadorUbicacionXTR4500L
+IAdaptadorUbicacionBolsin <|.down. AdaptadorUbicacionNavTrackQX7A
+IAdaptadorUbicacionBolsin <|.down. AdaptadorUbicacionGeoPulseMTR900
+AdaptadorUbicacionXTR4500L -[hidden]right- AdaptadorUbicacionNavTrackQX7A
+AdaptadorUbicacionNavTrackQX7A -[hidden]right- AdaptadorUbicacionGeoPulseMTR900
+
+AdaptadorUbicacionXTR4500L *-down-> "1" ServicioXTR4500L : -servicio
+AdaptadorUbicacionNavTrackQX7A *-down-> "1" ServicioNavTrackQX7A : -servicio
+AdaptadorUbicacionGeoPulseMTR900 *-down-> "1" ServicioGeoPulseMTR900 : -servicio
+ServicioXTR4500L -[hidden]right- ServicioNavTrackQX7A
+ServicioNavTrackQX7A -[hidden]right- ServicioGeoPulseMTR900
+
+AdaptadorUbicacionXTR4500L ..> UbicacionNoDisponibleException
+AdaptadorUbicacionNavTrackQX7A ..> UbicacionNoDisponibleException
+AdaptadorUbicacionGeoPulseMTR900 ..> UbicacionNoDisponibleException
+
+@enduml

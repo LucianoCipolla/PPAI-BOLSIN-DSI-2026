@@ -16,7 +16,7 @@ public class ServicioGeoPulseMTR900 {
         this.restClient = RestClient.builder().baseUrl(urlServicio).requestFactory(timeouts).build();
     }
 
-        public Object[][] fetchCargoPositions(String claveAPI, int nroBolsin) {
+    public Object[][] fetchCargoPositions(String claveAPI, int nroBolsin) {
         Object[][] respuesta;
         try {
             respuesta = restClient.get()

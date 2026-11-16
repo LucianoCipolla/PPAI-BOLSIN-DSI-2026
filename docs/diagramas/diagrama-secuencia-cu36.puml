@@ -1,0 +1,197 @@
+@startuml diagrama-secuencia-cu36
+' PPAI 2026 - DSI 3K1 - Grupo 5
+' Vista dinámica de la realización de caso de uso de diseño
+' CU 36 "Consultar seguimiento de bolsines" completo, rediseñado con el patrón Adapter
+' Modelo de GPS mostrado: XTR-4500L (los otros dos modelos siguen la misma secuencia con su adaptador y su servicio)
+'
+' Convenciones (mismas que la Entrega 1):
+' - Representación icónica de actor, boundary, control y entidad.
+' - Solo se nombran instancias únicas (log:Empleado, actual:CambioEstadoBolsin, destino:CM).
+'   :Bolsin, :Empleado y :CambioEstadoBolsin representan a todos los objetos de la clase.
+' - Fragmento loop cuando se repiten varios mensajes; asterisco cuando se repite uno solo.
+' - Los mensajes gestor -> pantalla se implementan devolviendo los datos (ver CLAUDE.md, regla 4).
+' - Sin mensajes de retorno.
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+skinparam sequence {
+  ArrowColor #1F3A68
+  LifeLineBorderColor #8A9BB8
+  LifeLineBackgroundColor #EAF1FB
+  ParticipantBorderColor #1F3A68
+  ParticipantBackgroundColor #FFFFFF
+  ActorBorderColor #1F3A68
+  ActorBackgroundColor #FFFFFF
+  GroupBorderColor #1F3A68
+  GroupHeaderFontColor #1F3A68
+}
+hide footbox
+
+title CU 36 – Consultar seguimiento de bolsines\nVista dinámica de la realización de CU de diseño (patrón Adapter)
+
+actor "Encargado de Bolsines" as eb
+boundary ":PantallaConsultarBolsines" as pantalla
+control ":GestorConsultarBolsines" as gestor
+entity "actual:Sesion" as sesion
+entity ":Usuario" as usuario
+entity "log:Empleado" as logEmp
+entity ":CM" as cm
+entity ":Bolsin" as bolsin
+entity "destino:CM" as destino
+entity ":CambioEstadoBolsin" as cambios
+entity "actual:CambioEstadoBolsin" as actual
+entity ":Estado" as estado
+entity ":Empleado" as empleado
+entity ":Rol" as rol
+boundary ":InterfazGPSTracker" as interfaz
+participant ":AdaptadorUbicacionXTR4500L" as adaptador
+participant ":ServicioXTR4500L" as servicio
+actor "GPS Tracker" as gps
+boundary ":InterfazGoogleMaps" as mapa
+actor "Servidor Google Maps" as google
+control ":GestorNotificarUbicacionBolsin" as notificar
+
+' ---------------------------------------------------------------------
+' Paso 1: el EB elige la opción
+' ---------------------------------------------------------------------
+eb -> pantalla : registrarOpcConsultasUbBolsines()
+activate pantalla
+pantalla -> pantalla : habilitarVentana()
+pantalla -> gestor : consultarUbBolsines(sesion)
+activate gestor
+
+' ---------------------------------------------------------------------
+' Paso 2: CM del usuario logueado
+' ---------------------------------------------------------------------
+gestor -> gestor : buscarCMUsuarioLogueado(sesion)
+activate gestor
+gestor -> sesion : getUserLog()
+gestor -> usuario : getEmp()
+gestor -> logEmp : getCM()
+gestor -> cm : getNombre()
+deactivate gestor
+gestor -> pantalla : mostrarCM(cm)
+
+' ---------------------------------------------------------------------
+' Paso 3: bolsines enviados desde la CM del usuario
+' ---------------------------------------------------------------------
+gestor -> gestor : buscarBolsinesEnviados()
+activate gestor
+group loop Recorrer bolsines [mientras haya bolsines]
+  gestor -> bolsin : esTuCMOrigen(cmUsuarioLogueado)
+  gestor -> bolsin : sosEnviado()
+  activate bolsin
+  bolsin -> cambios : ~*sosActual()
+  bolsin -> actual : sosEnviado()
+  activate actual
+  actual -> estado : sosEnviado()
+  deactivate actual
+  deactivate bolsin
+end
+deactivate gestor
+
+' ---------------------------------------------------------------------
+' Pasos 4 y 5: ubicación de cada bolsín a través del patrón Adapter
+' ---------------------------------------------------------------------
+gestor -> gestor : buscarDatosLocBolsines()
+activate gestor
+group loop Recorrer bolsines enviados [mientras haya bolsines enviados]
+  gestor -> bolsin : getNumeroBolsin()
+  gestor -> bolsin : getCMOrigen()
+  gestor -> cm : getCodigo()
+  gestor -> bolsin : getCMDestino()
+  gestor -> destino : getCodigo()
+  gestor -> bolsin : getModeloGPS()
+
+  gestor -> interfaz : buscarUbicacionBolsin(nroBolsin, codCMOrigen, codCMDestino, modeloGPS)
+  activate interfaz
+  create adaptador
+  interfaz -> adaptador : new(claveAPI, urlServicio)
+  activate adaptador
+  create servicio
+  adaptador -> servicio : new(urlServicio)
+  deactivate adaptador
+
+  interfaz -> adaptador : recibirUbicacionBolsin(nroBolsin, codCMOrigen, codCMDestino)
+  activate adaptador
+  adaptador -> adaptador : solicitarUbicacionBolsin(nroBolsin, codCMOrigen, codCMDestino)
+  activate adaptador
+  adaptador -> servicio : getBolsinLocation(claveAPI, nroBolsin, codCMOrigen)
+  activate servicio
+  servicio -> gps : getBolsinLocation(claveAPI, nroBolsin, codCMOrigen)
+  deactivate servicio
+  deactivate adaptador
+  adaptador -> adaptador : adaptarDatosUbicacion()
+  deactivate adaptador
+  deactivate interfaz
+end
+deactivate gestor
+
+' ---------------------------------------------------------------------
+' Paso 6: mostrar el mapa con las ubicaciones y solicitar la selección
+' ---------------------------------------------------------------------
+group loop Recorrer bolsines enviados [mientras haya bolsines enviados]
+  gestor -> bolsin : getNumeroBolsin()
+  gestor -> bolsin : getNumeroPrecinto()
+  gestor -> bolsin : getCMDestino()
+  gestor -> destino : getNombre()
+  gestor -> bolsin : getModeloGPS()
+end
+gestor -> pantalla : mostrarMapaConUbicaciones(ubicaciones)
+activate pantalla
+pantalla -> mapa : mostrarMapaConUbicaciones(ubicaciones)
+activate mapa
+mapa -> google : getMapa()
+deactivate mapa
+deactivate pantalla
+gestor -> pantalla : solicitarSelecBolsin()
+deactivate gestor
+
+opt el EB filtra por precinto o CM destino
+  eb -> pantalla : tomarFiltroBolsines(precinto, cmDestino)
+  pantalla -> mapa : filtrarMarcadores(nrosVisibles)
+end
+
+' ---------------------------------------------------------------------
+' Pasos 7 y 8: seleccionar un bolsín y solicitar el envío del correo
+' ---------------------------------------------------------------------
+eb -> pantalla : tomarSelecBolsinMapa(nroBolsin)
+pantalla -> mapa : marcarSeleccion(nroBolsin)
+pantalla -> gestor : tomarSelecBolsinMapa(nroBolsin)
+activate gestor
+gestor -> bolsin : ~*getNumeroBolsin()
+gestor -> pantalla : solicitarEnvioCorreo()
+deactivate gestor
+
+' ---------------------------------------------------------------------
+' Pasos 9 a 11: confirmar y notificar al GCM de la CM destino
+' ---------------------------------------------------------------------
+eb -> pantalla : tomarConfirmEnvioCorreo()
+pantalla -> gestor : tomarConfirmEnvioCorreo()
+activate gestor
+
+gestor -> gestor : buscarMailGCM()
+activate gestor
+group loop Buscar mail GCM [mientras haya empleados]
+  gestor -> bolsin : getCMDestino()
+  gestor -> empleado : esTuCM(cmDestino)
+  gestor -> empleado : sosGCM()
+  activate empleado
+  empleado -> rol : sosGCM()
+  deactivate empleado
+  gestor -> empleado : getMail()
+end
+deactivate gestor
+
+gestor -> gestor : llamarCUNotificarUbicacionDeBolsines()
+activate gestor
+gestor -> bolsin : getNumeroBolsin()
+gestor -> notificar : notificarUbicacion(mailGCM, nroBolsin, fechaHora, latitud, longitud)
+deactivate gestor
+
+gestor -> pantalla : informarEjecucionExitosa()
+gestor -> gestor : finCU()
+deactivate gestor
+deactivate pantalla
+@enduml

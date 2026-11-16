@@ -83,8 +83,7 @@ public class GestorConsultarBolsines {
     private void buscarDatosLocBolsines() {
         datosLocBolsines = new HashMap<>();
         for (Bolsin bolsin : bolsinesEnviados) {
-            Object[] datos = interfazGPSTracker.buscarUbicacionBolsin(bolsin.getNumeroBolsin(),
-                    bolsin.getCMOrigen().getCodigo(), bolsin.getCMDestino().getCodigo(), bolsin.getModeloGPS());
+            Object[] datos = interfazGPSTracker.buscarUbicacionBolsin(bolsin.getNumeroBolsin(), bolsin.getCMOrigen().getCodigo(), bolsin.getCMDestino().getCodigo(), bolsin.getModeloGPS());
             if (datos != null) {
                 datosLocBolsines.put(bolsin.getNumeroBolsin(), datos);
             }

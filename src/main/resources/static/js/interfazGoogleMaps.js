@@ -3,6 +3,8 @@ class InterfazGoogleMaps {
 
     static CENTRO_ARGENTINA = { lat: -33.0, lng: -63.6 };
     static ZOOM_INICIAL = 5;
+    // Con un solo marcador, encuadrar haría zoom hasta el nivel de calle: se limita a nivel provincia
+    static ZOOM_MAXIMO_ENCUADRE = 7;
     static COLOR_NORMAL = "#0b3d91";
     static COLOR_SELECCION = "#c2410c";
 
@@ -82,6 +84,11 @@ class InterfazGoogleMaps {
         }
         if (ubicaciones.length > 0) {
             mapa.fitBounds(limites, 40);
+            google.maps.event.addListenerOnce(mapa, "idle", () => {
+                if (mapa.getZoom() > InterfazGoogleMaps.ZOOM_MAXIMO_ENCUADRE) {
+                    mapa.setZoom(InterfazGoogleMaps.ZOOM_MAXIMO_ENCUADRE);
+                }
+            });
         }
     }
 
@@ -111,7 +118,7 @@ class InterfazGoogleMaps {
             });
         }
         if (limites.length > 0) {
-            mapa.fitBounds(limites, { padding: [40, 40] });
+            mapa.fitBounds(limites, { padding: [40, 40], maxZoom: InterfazGoogleMaps.ZOOM_MAXIMO_ENCUADRE });
         }
     }
 }
