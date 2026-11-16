@@ -5,7 +5,7 @@
 ' Modelo de GPS: XTR-4500L
 '
 ' Convenciones:
-' - Representación icónica de boundary, control y entidad.
+' - Representación icónica de actor, boundary, control y entidad.
 ' - :Bolsin representa a todos los bolsines enviados (se recorren con loop).
 ' - Sin mensajes de retorno.
 
@@ -21,6 +21,8 @@ skinparam sequence {
   ParticipantBackgroundColor #FFFFFF
   GroupBorderColor #1F3A68
   GroupHeaderFontColor #1F3A68
+  ActorBorderColor #1F3A68
+  ActorBackgroundColor #FFFFFF
 }
 hide footbox
 
@@ -33,12 +35,13 @@ entity "destino:CM" as destino
 boundary ":InterfazGPSTracker" as interfaz
 participant ":AdaptadorUbicacionXTR4500L" as adaptador
 participant ":ServicioXTR4500L" as servicio
+actor "GPS Tracker" as gps
 
 activate gestor
 gestor -> gestor : buscarDatosLocBolsines()
 activate gestor
 
-loop por cada bolsín de bolsinesEnviados
+group loop Recorrer bolsines enviados [mientras haya bolsines enviados]
   gestor -> bolsin : getNumeroBolsin()
   gestor -> bolsin : getCMOrigen()
   gestor -> origen : getCodigo()
@@ -63,6 +66,7 @@ loop por cada bolsín de bolsinesEnviados
   activate adaptador
   adaptador -> servicio : getBolsinLocation(claveAPI, nroBolsin, codCMOrigen)
   activate servicio
+  servicio -> gps : getBolsinLocation(claveAPI, nroBolsin, codCMOrigen)
   deactivate servicio
   deactivate adaptador
 

@@ -1,0 +1,158 @@
+@startuml diagrama-clases-adapter
+' PPAI 2026 - DSI 3K1 - Grupo 5
+' Vista estática de la realización de caso de uso de diseño
+' CU 36 "Consultar seguimiento de bolsines": parte del escenario rediseñada con el patrón Adapter (pasos 4 y 5)
+' Es la vista estática que resulta de diagrama-secuencia-xtr4500l, con los tres modelos de GPS
+' (la secuencia muestra XTR-4500L; NavTrack QX-7A y GeoPulse MTR-900 siguen la misma con su adaptador y su servicio).
+'
+' Convenciones (mismas que diagrama-clases-diseno):
+' - Visibilidad: + público, - privado. Tipos de Java.
+' - Atributos de referencia entre entidades: sobre la relación (nombre de rol), no dentro de la clase.
+' - Control -> entidad: dependencia (convención de la cátedra).
+' - Solo se muestran los métodos que usa la vista dinámica de la parte rediseñada.
+' - Constructores con el estereotipo <<create>> y el nombre new().
+
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 70
+skinparam ranksep 80
+skinparam defaultFontName Arial
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #1F3A68
+  ArrowColor #1F3A68
+  StereotypeFontColor #1F3A68
+}
+skinparam class<<interface>> {
+  BackgroundColor #EAF1FB
+}
+hide empty members
+hide circle
+
+title CU 36 – Consultar seguimiento de bolsines\nVista estática de la realización de CU de diseño – patrón Adapter (pasos 4 y 5)
+
+class GestorConsultarBolsines <<control>> {
+  -bolsinesEnviados: List<Bolsin>
+  -datosLocBolsines: Map<Integer, Object[]>
+  --
+  -buscarDatosLocBolsines(): void
+}
+
+class Bolsin <<entity>> {
+  -numeroBolsin: int
+  -numeroPrecinto: String
+  -fecha: LocalDate
+  -peso: double
+  -modeloGPS: String
+  --
+  +getNumeroBolsin(): int
+  +getCMOrigen(): CM
+  +getCMDestino(): CM
+  +getModeloGPS(): String
+}
+
+class CM <<entity>> {
+  -codigo: String
+  -nombre: String
+  -direccion: String
+  -mail: String
+  -telefono: String
+  --
+  +getCodigo(): String
+}
+
+class InterfazGPSTracker <<boundary>> {
+  -clavesAPI: Map<String, String>
+  -urlsServicios: Map<String, String>
+  --
+  +buscarUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String, modeloGPS: String): Object[]
+}
+
+interface IAdaptadorUbicacionBolsin <<interface>> {
+  +recibirUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String): Object[]
+  +solicitarUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String): void
+  +adaptarDatosUbicacion(): void
+}
+
+class AdaptadorUbicacionXTR4500L {
+  -claveAPI: String
+  -datosUbicacionBolsin: String
+  -datosUbicacionAdaptados: Object[]
+  --
+  <<create>> +new(claveAPI: String, urlServicio: String)
+  +recibirUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String): Object[]
+  +solicitarUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String): void
+  +adaptarDatosUbicacion(): void
+}
+
+class AdaptadorUbicacionNavTrackQX7A {
+  -claveAPI: String
+  -datosUbicacionBolsin: String
+  -datosUbicacionAdaptados: Object[]
+  --
+  <<create>> +new(claveAPI: String, urlServicio: String)
+  +recibirUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String): Object[]
+  +solicitarUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String): void
+  +adaptarDatosUbicacion(): void
+}
+
+class AdaptadorUbicacionGeoPulseMTR900 {
+  -claveAPI: String
+  -datosUbicacionBolsin: Object[][]
+  -datosUbicacionAdaptados: Object[]
+  --
+  <<create>> +new(claveAPI: String, urlServicio: String)
+  +recibirUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String): Object[]
+  +solicitarUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String): void
+  +adaptarDatosUbicacion(): void
+}
+
+class ServicioXTR4500L {
+  -restClient: RestClient
+  --
+  <<create>> +new(urlServicio: String)
+  +getBolsinLocation(claveAPI: String, nroBolsin: int, codCMOrigen: String): String
+}
+
+class ServicioNavTrackQX7A {
+  -restClient: RestClient
+  --
+  <<create>> +new(urlServicio: String)
+  +retrieveTrackingData(claveAPI: String, nroBolsin: int, codCMDestino: String): String
+}
+
+class ServicioGeoPulseMTR900 {
+  -restClient: RestClient
+  --
+  <<create>> +new(urlServicio: String)
+  +fetchCargoPositions(claveAPI: String, nroBolsin: int): Object[][]
+}
+
+' --- Control, boundary y entidades
+GestorConsultarBolsines -right-> "1" InterfazGPSTracker : -interfazGPSTracker
+GestorConsultarBolsines .down.> Bolsin
+GestorConsultarBolsines .down.> CM
+Bolsin "*" -right-> "1" CM : -cmOrigen
+Bolsin "*" -right-> "1" CM : -cmDestino
+
+' --- Patrón Adapter: Client, Target, Adapter y Adaptee de arriba hacia abajo
+InterfazGPSTracker .down.> IAdaptadorUbicacionBolsin
+InterfazGPSTracker .down.> AdaptadorUbicacionXTR4500L
+InterfazGPSTracker .down.> AdaptadorUbicacionNavTrackQX7A
+InterfazGPSTracker .down.> AdaptadorUbicacionGeoPulseMTR900
+
+IAdaptadorUbicacionBolsin <|.down. AdaptadorUbicacionXTR4500L
+IAdaptadorUbicacionBolsin <|.down. AdaptadorUbicacionNavTrackQX7A
+IAdaptadorUbicacionBolsin <|.down. AdaptadorUbicacionGeoPulseMTR900
+AdaptadorUbicacionXTR4500L -[hidden]right- AdaptadorUbicacionNavTrackQX7A
+AdaptadorUbicacionNavTrackQX7A -[hidden]right- AdaptadorUbicacionGeoPulseMTR900
+
+AdaptadorUbicacionXTR4500L *-down-> "1" ServicioXTR4500L : -servicio
+AdaptadorUbicacionNavTrackQX7A *-down-> "1" ServicioNavTrackQX7A : -servicio
+AdaptadorUbicacionGeoPulseMTR900 *-down-> "1" ServicioGeoPulseMTR900 : -servicio
+ServicioXTR4500L -[hidden]right- ServicioNavTrackQX7A
+ServicioNavTrackQX7A -[hidden]right- ServicioGeoPulseMTR900
+
+@enduml
