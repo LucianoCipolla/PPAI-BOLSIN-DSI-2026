@@ -1,13 +1,13 @@
 // Pantalla del CU 36: mapa, selección sincronizada, filtro en vivo y modal de confirmación.
 const listaBolsines = document.getElementById("listaBolsines");
 const modalConfirmacionCorreo = document.getElementById("modalConfirmacionCorreo");
-const interfazGoogleMaps = new InterfazGoogleMaps("mapaUbicaciones", claveGoogleMaps, seleccionarBolsin);
+const interfazGoogleMaps = new InterfazGoogleMaps("mapaUbicaciones", claveGoogleMaps, tomarSelecBolsinMapa);
 
 const MINUTOS_POR_HORA = 60;
 const MS_POR_MINUTO = 60000;
 const HORAS_POR_DIA = 24;
-// CU36 pasos 7 y 8
-async function seleccionarBolsin(nroBolsin) {
+// CU36 pasos 7 y 8: punto de entrada de la selección (marcador o lista)
+async function tomarSelecBolsinMapa(nroBolsin) {
     marcarSeleccionEnLista(nroBolsin);
     interfazGoogleMaps.marcarSeleccion(nroBolsin);
 
@@ -104,7 +104,7 @@ if (listaBolsines) {
     listaBolsines.addEventListener("click", (evento) => {
         const tarjeta = evento.target.closest("button");
         if (tarjeta) {
-            seleccionarBolsin(Number(tarjeta.closest("li").dataset.nro));
+            tomarSelecBolsinMapa(Number(tarjeta.closest("li").dataset.nro));
         }
     });
 

@@ -113,7 +113,7 @@ Rutas relativas a `src/main/java/com/g5/bolsines/`, salvo las que empiezan con `
 
 | Estereotipo / rol | Clase del diagrama | Archivo |
 |---|---|---|
-| Boundary | `PantallaConsultarBolsines` | `boundary/PantallaConsultarBolsines.java` y `templates/consultarBolsines.html` |
+| Boundary | `PantallaConsultarBolsines` | `boundary/PantallaConsultarBolsines.java`, `templates/consultarBolsines.html` y `static/js/pantallaConsultarBolsines.js` |
 | Boundary | `InterfazGoogleMaps` | `static/js/interfazGoogleMaps.js` |
 | Boundary, Client del Adapter | `InterfazGPSTracker` | `boundary/InterfazGPSTracker.java` |
 | Control | `GestorConsultarBolsines` | `control/GestorConsultarBolsines.java` |
@@ -298,6 +298,7 @@ Ambas son unchecked: extienden `RuntimeException`. No tienen atributos propios.
 | `-interfazGPSTracker` | `InterfazGPSTracker` | `{readOnly}` |
 | `-gestorNotificarUbicacionBolsin` | `GestorNotificarUbicacionBolsin` | `{readOnly}` |
 | `-cmUsuarioLogueado` | `CM` | |
+| `-nombreCMUsuarioLogueado` | `String` | |
 | `-bolsinesEnviados` | `List<Bolsin>` | |
 | `-datosLocBolsines` | `Map<Integer, Object[]>` | |
 | `-bolsinSeleccionado` | `Bolsin` | |
@@ -316,7 +317,7 @@ Ambas son unchecked: extienden `RuntimeException`. No tienen atributos propios.
 | `-llamarCUNotificarUbicacionDeBolsines(): boolean` |
 | `+finCU(): void` |
 
-`consultarUbBolsines` devuelve `Object[]{CM cmUsuarioLogueado, List<Map<String, Object>> ubicaciones}`. Cada mapa tiene las
+`consultarUbBolsines` devuelve `Object[]{String nombreCMUsuarioLogueado, List<Map<String, Object>> ubicaciones}`. Cada mapa tiene las
 claves `nroBolsin`, `numeroPrecinto`, `cmDestino`, `modeloGPS` y `disponible`; si hay ubicación, también `latitud`,
 `longitud` y `fechaHora`.
 

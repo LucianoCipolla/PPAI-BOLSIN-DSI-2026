@@ -52,5 +52,5 @@ public class Empleado {
 
     public String getNombreCompleto() {
         return nombre + " " + apellido;
-    } // CU36 paso 1
+    } // CU36 sin paso: lo usa PantallaInicio
 }

@@ -1,7 +1,6 @@
 package com.g5.bolsines.boundary;
 
 import com.g5.bolsines.control.GestorConsultarBolsines;
-import com.g5.bolsines.entity.CM;
 import com.g5.bolsines.entity.Sesion;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,7 +41,7 @@ public class PantallaConsultarBolsines {
         Object[] resultado = gestor.consultarUbBolsines(sesion);
         List<Map<String, Object>> ubicaciones = (List<Map<String, Object>>) resultado[1];
 
-        mostrarCM((CM) resultado[0], model);
+        mostrarCM((String) resultado[0], model);
         mostrarMapaConUbicaciones(ubicaciones, model);
         if (!ubicaciones.isEmpty()) {
             solicitarSelecBolsin(model);
@@ -54,8 +53,8 @@ public class PantallaConsultarBolsines {
         model.addAttribute("claveGoogleMaps", claveGoogleMaps);
     } // CU36 paso 1
 
-    private void mostrarCM(CM cm, Model model) {
-        model.addAttribute("lblCMUsuario", cm.getNombre());
+    private void mostrarCM(String nombreCM, Model model) {
+        model.addAttribute("lblCMUsuario", nombreCM);
     } // CU36 paso 2
 
     private void mostrarMapaConUbicaciones(List<Map<String, Object>> ubicaciones, Model model) {

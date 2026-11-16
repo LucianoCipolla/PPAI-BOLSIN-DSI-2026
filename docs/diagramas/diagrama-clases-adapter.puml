@@ -11,6 +11,7 @@
 ' - Control -> entidad: dependencia (convención de la cátedra).
 ' - Solo se muestran los métodos que usa la vista dinámica de la parte rediseñada.
 ' - Constructores con el estereotipo <<create>> y el nombre new().
+' - {readOnly}: atributo final en Java. {static}: atributo de clase.
 
 !pragma layout smetana
 skinparam classAttributeIconSize 0
@@ -27,6 +28,9 @@ skinparam class {
 }
 skinparam class<<interface>> {
   BackgroundColor #EAF1FB
+}
+skinparam class<<exception>> {
+  BackgroundColor #F5F5F5
 }
 hide empty members
 hide circle
@@ -64,8 +68,11 @@ class CM <<entity>> {
 }
 
 class InterfazGPSTracker <<boundary>> {
-  -clavesAPI: Map<String, String>
-  -urlsServicios: Map<String, String>
+  -{static} XTR: String = "XTR-4500L" {readOnly}
+  -{static} NAVTRACK: String = "NavTrack QX-7A" {readOnly}
+  -{static} GEOPULSE: String = "GeoPulse MTR-900" {readOnly}
+  -clavesAPI: Map<String, String> {readOnly}
+  -urlsServicios: Map<String, String> {readOnly}
   --
   +buscarUbicacionBolsin(nroBolsin: int, codCMOrigen: String, codCMDestino: String, modeloGPS: String): Object[]
 }
@@ -77,7 +84,7 @@ interface IAdaptadorUbicacionBolsin <<interface>> {
 }
 
 class AdaptadorUbicacionXTR4500L {
-  -claveAPI: String
+  -claveAPI: String {readOnly}
   -datosUbicacionBolsin: String
   -datosUbicacionAdaptados: Object[]
   --
@@ -88,7 +95,7 @@ class AdaptadorUbicacionXTR4500L {
 }
 
 class AdaptadorUbicacionNavTrackQX7A {
-  -claveAPI: String
+  -claveAPI: String {readOnly}
   -datosUbicacionBolsin: String
   -datosUbicacionAdaptados: Object[]
   --
@@ -99,7 +106,7 @@ class AdaptadorUbicacionNavTrackQX7A {
 }
 
 class AdaptadorUbicacionGeoPulseMTR900 {
-  -claveAPI: String
+  -claveAPI: String {readOnly}
   -datosUbicacionBolsin: Object[][]
   -datosUbicacionAdaptados: Object[]
   --
@@ -110,21 +117,21 @@ class AdaptadorUbicacionGeoPulseMTR900 {
 }
 
 class ServicioXTR4500L {
-  -restClient: RestClient
+  -restClient: RestClient {readOnly}
   --
   <<create>> +new(urlServicio: String)
   +getBolsinLocation(claveAPI: String, nroBolsin: int, codCMOrigen: String): String
 }
 
 class ServicioNavTrackQX7A {
-  -restClient: RestClient
+  -restClient: RestClient {readOnly}
   --
   <<create>> +new(urlServicio: String)
   +retrieveTrackingData(claveAPI: String, nroBolsin: int, codCMDestino: String): String
 }
 
 class ServicioGeoPulseMTR900 {
-  -restClient: RestClient
+  -restClient: RestClient {readOnly}
   --
   <<create>> +new(urlServicio: String)
   +fetchCargoPositions(claveAPI: String, nroBolsin: int): Object[][]
@@ -154,5 +161,19 @@ AdaptadorUbicacionNavTrackQX7A *-down-> "1" ServicioNavTrackQX7A : -servicio
 AdaptadorUbicacionGeoPulseMTR900 *-down-> "1" ServicioGeoPulseMTR900 : -servicio
 ServicioXTR4500L -[hidden]right- ServicioNavTrackQX7A
 ServicioNavTrackQX7A -[hidden]right- ServicioGeoPulseMTR900
+
+' --- Excepciones (flujo A3)
+class UbicacionNoDisponibleException <<exception>>
+class ServicioGPSException <<exception>>
+InterfazGPSTracker ..> UbicacionNoDisponibleException
+AdaptadorUbicacionXTR4500L ..> UbicacionNoDisponibleException
+AdaptadorUbicacionNavTrackQX7A ..> UbicacionNoDisponibleException
+AdaptadorUbicacionGeoPulseMTR900 ..> UbicacionNoDisponibleException
+AdaptadorUbicacionXTR4500L ..> ServicioGPSException
+AdaptadorUbicacionNavTrackQX7A ..> ServicioGPSException
+AdaptadorUbicacionGeoPulseMTR900 ..> ServicioGPSException
+ServicioXTR4500L ..> ServicioGPSException
+ServicioNavTrackQX7A ..> ServicioGPSException
+ServicioGeoPulseMTR900 ..> ServicioGPSException
 
 @enduml

@@ -26,6 +26,7 @@ public class GestorConsultarBolsines {
     private final GestorNotificarUbicacionBolsin gestorNotificarUbicacionBolsin;
 
     private CM cmUsuarioLogueado;
+    private String nombreCMUsuarioLogueado;
     private List<Bolsin> bolsinesEnviados = new ArrayList<>();
     private Map<Integer, Object[]> datosLocBolsines = new HashMap<>();
     private Bolsin bolsinSeleccionado;
@@ -45,9 +46,10 @@ public class GestorConsultarBolsines {
 
         List<Map<String, Object>> ubicaciones = new ArrayList<>();
         for (Bolsin bolsin : bolsinesEnviados) {
-            Object[] datos = datosLocBolsines.get(bolsin.getNumeroBolsin());
+            int nroBolsin = bolsin.getNumeroBolsin();
+            Object[] datos = datosLocBolsines.get(nroBolsin);
             Map<String, Object> ubicacion = new HashMap<>();
-            ubicacion.put("nroBolsin", bolsin.getNumeroBolsin());
+            ubicacion.put("nroBolsin", nroBolsin);
             ubicacion.put("numeroPrecinto", bolsin.getNumeroPrecinto());
             ubicacion.put("cmDestino", bolsin.getCMDestino().getNombre());
             ubicacion.put("modeloGPS", bolsin.getModeloGPS());
@@ -60,7 +62,7 @@ public class GestorConsultarBolsines {
             ubicaciones.add(ubicacion);
         }
 
-        Object[] resultado = {cmUsuarioLogueado, ubicaciones};
+        Object[] resultado = {nombreCMUsuarioLogueado, ubicaciones};
         if (bolsinesEnviados.isEmpty()) {
             finCU();
         }
@@ -69,6 +71,7 @@ public class GestorConsultarBolsines {
 
     private void buscarCMUsuarioLogueado(Sesion sesion) {
         cmUsuarioLogueado = sesion.getUserLog().getEmp().getCM();
+        nombreCMUsuarioLogueado = cmUsuarioLogueado.getNombre();
     } // CU36 paso 2
 
     private void buscarBolsinesEnviados() {
@@ -83,9 +86,13 @@ public class GestorConsultarBolsines {
     private void buscarDatosLocBolsines() {
         datosLocBolsines = new HashMap<>();
         for (Bolsin bolsin : bolsinesEnviados) {
-            Object[] datos = interfazGPSTracker.buscarUbicacionBolsin(bolsin.getNumeroBolsin(), bolsin.getCMOrigen().getCodigo(), bolsin.getCMDestino().getCodigo(), bolsin.getModeloGPS());
+            int nroBolsin = bolsin.getNumeroBolsin();
+            String codCMOrigen = bolsin.getCMOrigen().getCodigo();
+            String codCMDestino = bolsin.getCMDestino().getCodigo();
+            String modeloGPS = bolsin.getModeloGPS();
+            Object[] datos = interfazGPSTracker.buscarUbicacionBolsin(nroBolsin, codCMOrigen, codCMDestino, modeloGPS);
             if (datos != null) {
-                datosLocBolsines.put(bolsin.getNumeroBolsin(), datos);
+                datosLocBolsines.put(nroBolsin, datos);
             }
         }
     } // CU36 pasos 4 y 5
@@ -121,13 +128,15 @@ public class GestorConsultarBolsines {
         if (mailGCM == null) {
             return false;
         }
-        Object[] datos = datosLocBolsines.get(bolsinSeleccionado.getNumeroBolsin());
-        return gestorNotificarUbicacionBolsin.notificarUbicacion(mailGCM, bolsinSeleccionado.getNumeroBolsin(),
+        int nroBolsin = bolsinSeleccionado.getNumeroBolsin();
+        Object[] datos = datosLocBolsines.get(nroBolsin);
+        return gestorNotificarUbicacionBolsin.notificarUbicacion(mailGCM, nroBolsin,
                 (LocalDateTime) datos[3], (Double) datos[1], (Double) datos[2]);
     } // CU36 paso 11
 
     public void finCU() {
         cmUsuarioLogueado = null;
+        nombreCMUsuarioLogueado = null;
         bolsinesEnviados = new ArrayList<>();
         datosLocBolsines = new HashMap<>();
         bolsinSeleccionado = null;

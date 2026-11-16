@@ -6,10 +6,13 @@
 '
 ' Convenciones (mismas que la Entrega 1):
 ' - Representación icónica de actor, boundary, control y entidad.
-' - Solo se nombran instancias únicas (log:Empleado, actual:CambioEstadoBolsin, destino:CM).
-'   :Bolsin, :Empleado y :CambioEstadoBolsin representan a todos los objetos de la clase.
+' - Solo se nombran instancias únicas o con un rol propio (log:Empleado, log:CM, origen:CM, destino:CM,
+'   actual:CambioEstadoBolsin). :Bolsin, :Empleado, :CambioEstadoBolsin y :CM (la CM asignada a cada
+'   empleado) representan a todos los objetos de la clase.
 ' - Fragmento loop cuando se repiten varios mensajes; asterisco cuando se repite uno solo.
-' - Los mensajes gestor -> pantalla se implementan devolviendo los datos (ver CLAUDE.md, regla 4).
+' - El gestor no le envía mensajes a la pantalla: le devuelve los datos y es la pantalla la que se
+'   envía a sí misma mostrarCM, mostrarMapaConUbicaciones, solicitarSelecBolsin, solicitarEnvioCorreo
+'   e informarEjecucionExitosa. Cada flecha corresponde a una llamada real del código.
 ' - Sin mensajes de retorno.
 
 skinparam shadowing false
@@ -36,13 +39,15 @@ control ":GestorConsultarBolsines" as gestor
 entity "actual:Sesion" as sesion
 entity ":Usuario" as usuario
 entity "log:Empleado" as logEmp
-entity ":CM" as cm
+entity "log:CM" as cm
 entity ":Bolsin" as bolsin
+entity "origen:CM" as origen
 entity "destino:CM" as destino
 entity ":CambioEstadoBolsin" as cambios
 entity "actual:CambioEstadoBolsin" as actual
 entity ":Estado" as estado
 entity ":Empleado" as empleado
+entity ":CM" as cmEmpleado
 entity ":Rol" as rol
 boundary ":InterfazGPSTracker" as interfaz
 participant ":AdaptadorUbicacionXTR4500L" as adaptador
@@ -55,9 +60,9 @@ control ":GestorNotificarUbicacionBolsin" as notificar
 ' ---------------------------------------------------------------------
 ' Paso 1: el EB elige la opción
 ' ---------------------------------------------------------------------
-eb -> pantalla : registrarOpcConsultasUbBolsines()
+eb -> pantalla : registrarOpcConsultasUbBolsines(httpSession, model)
 activate pantalla
-pantalla -> pantalla : habilitarVentana()
+pantalla -> pantalla : habilitarVentana(model)
 pantalla -> gestor : consultarUbBolsines(sesion)
 activate gestor
 
@@ -71,7 +76,6 @@ gestor -> usuario : getEmp()
 gestor -> logEmp : getCM()
 gestor -> cm : getNombre()
 deactivate gestor
-gestor -> pantalla : mostrarCM(cm)
 
 ' ---------------------------------------------------------------------
 ' Paso 3: bolsines enviados desde la CM del usuario
@@ -80,6 +84,10 @@ gestor -> gestor : buscarBolsinesEnviados()
 activate gestor
 group loop Recorrer bolsines [mientras haya bolsines]
   gestor -> bolsin : esTuCMOrigen(cmUsuarioLogueado)
+  activate bolsin
+  bolsin -> origen : getCodigo()
+  bolsin -> cm : getCodigo()
+  deactivate bolsin
   gestor -> bolsin : sosEnviado()
   activate bolsin
   bolsin -> cambios : ~*sosActual()
@@ -99,7 +107,7 @@ activate gestor
 group loop Recorrer bolsines enviados [mientras haya bolsines enviados]
   gestor -> bolsin : getNumeroBolsin()
   gestor -> bolsin : getCMOrigen()
-  gestor -> cm : getCodigo()
+  gestor -> origen : getCodigo()
   gestor -> bolsin : getCMDestino()
   gestor -> destino : getCodigo()
   gestor -> bolsin : getModeloGPS()
@@ -129,7 +137,7 @@ end
 deactivate gestor
 
 ' ---------------------------------------------------------------------
-' Paso 6: mostrar el mapa con las ubicaciones y solicitar la selección
+' Paso 6: armar las ubicaciones, mostrarlas en el mapa y solicitar la selección
 ' ---------------------------------------------------------------------
 group loop Recorrer bolsines enviados [mientras haya bolsines enviados]
   gestor -> bolsin : getNumeroBolsin()
@@ -138,36 +146,54 @@ group loop Recorrer bolsines enviados [mientras haya bolsines enviados]
   gestor -> destino : getNombre()
   gestor -> bolsin : getModeloGPS()
 end
-gestor -> pantalla : mostrarMapaConUbicaciones(ubicaciones)
-activate pantalla
+deactivate gestor
+
+pantalla -> pantalla : mostrarCM(nombreCM, model)
+pantalla -> pantalla : mostrarMapaConUbicaciones(ubicaciones, model)
+pantalla -> pantalla : solicitarSelecBolsin(model)
 pantalla -> mapa : mostrarMapaConUbicaciones(ubicaciones)
 activate mapa
 mapa -> google : getMapa()
+note right
+  getMapa(): carga de la API de mapas
+  (cargarGoogleMaps; sin clave, Leaflet + OpenStreetMap)
+end note
 deactivate mapa
 deactivate pantalla
-gestor -> pantalla : solicitarSelecBolsin()
-deactivate gestor
 
-opt el EB filtra por precinto o CM destino
+group opt el EB filtra por precinto o CM destino
   eb -> pantalla : tomarFiltroBolsines(precinto, cmDestino)
+  activate pantalla
   pantalla -> mapa : filtrarMarcadores(nrosVisibles)
+  deactivate pantalla
+end
+
+group opt el EB cancela (Obs. 1)
+  eb -> pantalla : cancelar()
+  activate pantalla
+  pantalla -> gestor : finCU()
+  deactivate pantalla
 end
 
 ' ---------------------------------------------------------------------
 ' Pasos 7 y 8: seleccionar un bolsín y solicitar el envío del correo
 ' ---------------------------------------------------------------------
 eb -> pantalla : tomarSelecBolsinMapa(nroBolsin)
+activate pantalla
+pantalla -> pantalla : marcarSeleccionEnLista(nroBolsin)
 pantalla -> mapa : marcarSeleccion(nroBolsin)
 pantalla -> gestor : tomarSelecBolsinMapa(nroBolsin)
 activate gestor
 gestor -> bolsin : ~*getNumeroBolsin()
-gestor -> pantalla : solicitarEnvioCorreo()
 deactivate gestor
+pantalla -> pantalla : solicitarEnvioCorreo()
+deactivate pantalla
 
 ' ---------------------------------------------------------------------
 ' Pasos 9 a 11: confirmar y notificar al GCM de la CM destino
 ' ---------------------------------------------------------------------
-eb -> pantalla : tomarConfirmEnvioCorreo()
+eb -> pantalla : tomarConfirmEnvioCorreo(redirect)
+activate pantalla
 pantalla -> gestor : tomarConfirmEnvioCorreo()
 activate gestor
 
@@ -176,6 +202,10 @@ activate gestor
 group loop Buscar mail GCM [mientras haya empleados]
   gestor -> bolsin : getCMDestino()
   gestor -> empleado : esTuCM(cmDestino)
+  activate empleado
+  empleado -> cmEmpleado : getCodigo()
+  empleado -> destino : getCodigo()
+  deactivate empleado
   gestor -> empleado : sosGCM()
   activate empleado
   empleado -> rol : sosGCM()
@@ -190,8 +220,8 @@ gestor -> bolsin : getNumeroBolsin()
 gestor -> notificar : notificarUbicacion(mailGCM, nroBolsin, fechaHora, latitud, longitud)
 deactivate gestor
 
-gestor -> pantalla : informarEjecucionExitosa()
 gestor -> gestor : finCU()
 deactivate gestor
+pantalla -> pantalla : informarEjecucionExitosa(redirect)
 deactivate pantalla
 @enduml
