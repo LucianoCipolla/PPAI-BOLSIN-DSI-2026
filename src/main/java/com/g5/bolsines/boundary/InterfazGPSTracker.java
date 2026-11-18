@@ -8,18 +8,13 @@ import com.g5.bolsines.adapter.UbicacionNoDisponibleException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
-
 /** Boundary con el GPS Tracker y Client del patrón Adapter. */
 @Component
 public class InterfazGPSTracker {
 
-    private static final String XTR = "XTR-4500L";
-    private static final String NAVTRACK = "NavTrack QX-7A";
-    private static final String GEOPULSE = "GeoPulse MTR-900";
-
-    private final Map<String, String> clavesAPI;
-    private final Map<String, String> urlsServicios;
+    // Índices paralelos: 0 = XTR-4500L, 1 = NavTrack QX-7A, 2 = GeoPulse MTR-900
+    private final String[] clavesAPI;
+    private final String[] urlsServicios;
 
     public InterfazGPSTracker(@Value("${gps.clave.xtr4500l}") String claveXTR,
                               @Value("${gps.clave.navtrack}") String claveNavTrack,
@@ -27,17 +22,15 @@ public class InterfazGPSTracker {
                               @Value("${gps.url.xtr4500l}") String urlXTR,
                               @Value("${gps.url.navtrack}") String urlNavTrack,
                               @Value("${gps.url.geopulse}") String urlGeoPulse) {
-        this.clavesAPI = Map.of(XTR, claveXTR, NAVTRACK, claveNavTrack, GEOPULSE, claveGeoPulse);
-        this.urlsServicios = Map.of(XTR, urlXTR, NAVTRACK, urlNavTrack, GEOPULSE, urlGeoPulse);
+        this.clavesAPI = new String[]{claveXTR, claveNavTrack, claveGeoPulse};
+        this.urlsServicios = new String[]{urlXTR, urlNavTrack, urlGeoPulse};
     }
 
     public Object[] buscarUbicacionBolsin(int nroBolsin, String codCMOrigen, String codCMDestino, String modeloGPS) {
-        String clave = clavesAPI.get(modeloGPS);
-        String url = urlsServicios.get(modeloGPS);
         IAdaptadorUbicacionBolsin adaptador = switch (modeloGPS) {
-            case XTR -> new AdaptadorUbicacionXTR4500L(clave, url);
-            case NAVTRACK -> new AdaptadorUbicacionNavTrackQX7A(clave, url);
-            case GEOPULSE -> new AdaptadorUbicacionGeoPulseMTR900(clave, url);
+            case "XTR-4500L" -> new AdaptadorUbicacionXTR4500L(clavesAPI[0], urlsServicios[0]);
+            case "NavTrack QX-7A" -> new AdaptadorUbicacionNavTrackQX7A(clavesAPI[1], urlsServicios[1]);
+            case "GeoPulse MTR-900" -> new AdaptadorUbicacionGeoPulseMTR900(clavesAPI[2], urlsServicios[2]);
             default -> null;
         };
         if (adaptador == null) {
