@@ -80,7 +80,7 @@ class PantallaConsultarBolsinesTest {
         MockHttpSession sesion = iniciarSesion("eb.cba-01");
 
         Map<Integer, Map<String, Object>> ubicaciones = consultar(sesion);
-        assertEquals(java.util.Set.of(101, 111), ubicaciones.keySet());
+        assertEquals(java.util.Set.of(101, 102, 103, 111), ubicaciones.keySet());
         assertTrue((Boolean) ubicaciones.get(101).get("disponible"));
         assertNotNull(ubicaciones.get(101).get("latitud"));
 
@@ -102,7 +102,7 @@ class PantallaConsultarBolsinesTest {
         consultar(sesion);
         MvcResult segunda = mvc.perform(get(PANTALLA).session(sesion)).andReturn();
 
-        assertEquals(2, ((List<Map<String, Object>>) segunda.getModelAndView().getModel().get("ubicaciones")).size());
+        assertEquals(4, ((List<Map<String, Object>>) segunda.getModelAndView().getModel().get("ubicaciones")).size());
     }
 
     @Test

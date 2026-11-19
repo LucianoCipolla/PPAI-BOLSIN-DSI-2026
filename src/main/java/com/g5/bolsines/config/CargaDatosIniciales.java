@@ -108,11 +108,11 @@ public class CargaDatosIniciales implements CommandLineRunner {
 
     private void cargarBolsines() {
         cargarBolsin(101, XTR, "CM-CBA-01", "CM-ROS-02", "Enviado");
-        cargarBolsin(102, NAVTRACK, "CM-ROS-02", "CM-MDZ-03", "Enviado");
-        cargarBolsin(103, GEOPULSE, "CM-MDZ-03", "CM-BA-01", "Enviado");
+        cargarBolsin(102, NAVTRACK, "CM-CBA-01", "CM-MDZ-03", "Enviado");
+        cargarBolsin(103, GEOPULSE, "CM-CBA-01", "CM-BA-01", "Enviado");
         cargarBolsin(104, XTR, "CM-BA-01", "CM-CBA-01", "Enviado");
-        cargarBolsin(105, NAVTRACK, "CM-TUC-01", "CM-SLA-01", "Enviado");
-        cargarBolsin(106, GEOPULSE, "CM-SLA-01", "CM-JUJ-01", "Enviado");
+        cargarBolsin(105, NAVTRACK, "CM-BA-01", "CM-SLA-01", "Enviado");
+        cargarBolsin(106, GEOPULSE, "CM-BA-01", "CM-JUJ-01", "Enviado");
         cargarBolsin(107, XTR, "CM-NQN-01", "CM-MDQ-01", "Enviado");
         cargarBolsin(108, NAVTRACK, "CM-MDQ-01", "CM-BA-01", "Enviado");
         cargarBolsin(109, GEOPULSE, "CM-LPL-01", "CM-CBA-01", "Enviado");

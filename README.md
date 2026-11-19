@@ -73,24 +73,23 @@ propio de este sistema.
 
 | Usuario | CM | Ve | Para probar |
 |---|---|---|---|
-| `eb.cba-01` | Córdoba | 101 (XTR-4500L) y 111 | Flujo básico y A3 |
-| `eb.ros-02` | Rosario | 102 (NavTrack QX-7A) | Flujo básico con NavTrack |
-| `eb.mdz-03` | Mendoza | 103 (GeoPulse MTR-900) | Flujo básico con GeoPulse |
-| `eb.juj-01` | Jujuy | — | A1 (es solo CM destino) |
-| `eb.ba-01`, `eb.tuc-01`, `eb.sla-01`, `eb.nqn-01`, `eb.mdq-01`, `eb.lpl-01`, `eb.cba-02` | Resto de las CM | Un bolsín cada uno (104 a 110) | Flujo básico |
+| `eb.cba-01` | Córdoba | 101 (XTR-4500L), 102 (NavTrack QX-7A), 103 (GeoPulse MTR-900) y 111 | Flujo básico con los tres modelos, filtros y A3 |
+| `eb.ba-01` | Buenos Aires | 104 (XTR-4500L), 105 (NavTrack QX-7A) y 106 (GeoPulse MTR-900) | Flujo básico con los tres modelos y filtros |
+| `eb.nqn-01`, `eb.mdq-01`, `eb.lpl-01`, `eb.cba-02` | Neuquén, Mar del Plata, La Plata, Córdoba Norte | Un bolsín cada uno (107 a 110) | Flujo básico |
+| `eb.juj-01`, `eb.ros-02`, `eb.mdz-03`, `eb.tuc-01`, `eb.sla-01` | Resto de las CM | — | A1 (sin bolsines enviados) |
 
 ## Cómo probar cada flujo
 
 ### Flujo básico
 
 1. En **Ingresar como** elegí `eb.cba-01` y tocá **Consultar seguimiento de bolsines**.
-2. Se ven los bolsines 101 y 111. **No** aparece el 112, que sigue Cerrado.
+2. Se ven los bolsines 101, 102, 103 y 111. **No** aparece el 112, que sigue Cerrado.
 3. Seleccioná el 101 desde el marcador o desde la lista. Ambos se resaltan y se abre el modal con el resumen.
 4. Tocá **Enviar correo**. El CU termina en la pantalla de inicio con el mensaje de éxito.
 5. El correo está simulado: en la consola de la aplicación aparece
    `[CU 30 simulado] Mail a gcm.ros-02@bolsines.test...`, con el GCM de la CM destino.
 
-Para ver los otros dos modelos de GPS, repetí con `eb.ros-02` (NavTrack QX-7A) y `eb.mdz-03` (GeoPulse MTR-900).
+Para ver los otros dos modelos de GPS, seleccioná el 102 (NavTrack QX-7A) o el 103 (GeoPulse MTR-900), o repetí con `eb.ba-01`.
 
 También se puede probar el filtro por precinto y CM destino ("Mostrando X de Y"), **No enviar** (cierra el modal y vuelve
 al mapa) y **Cancelar** (termina el CU y vuelve a inicio).
